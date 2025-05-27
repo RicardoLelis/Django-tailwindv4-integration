@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-django_db}
+      - POSTGRES_USER=${POSTGRES_USER:-django_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-django_password}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-django_user}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./project:/app/project
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - DEBUG=True
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-django_user}:${POSTGRES_PASSWORD:-django_password}@db:5432/${POSTGRES_DB:-django_db}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  tailwind:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./package.json:/app/package.json
+      - ./package-lock.json:/app/package-lock.json
+      - ./node_modules:/app/node_modules
+      - ./project/static:/app/project/static
+    command: sh -c "npm install && npm run watch:css"
+    environment:
+      - NODE_ENV=development
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
