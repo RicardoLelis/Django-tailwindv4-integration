@@ -2,10 +2,9 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import AuthenticationForm
 from django.utils import timezone
 from datetime import datetime, timedelta
-from .forms import RiderRegistrationForm
+from .forms import RiderRegistrationForm, EmailAuthenticationForm
 from .models import Rider, Ride
 
 def landing_page(request):
@@ -33,21 +32,21 @@ def login_view(request):
         return redirect('home')
         
     if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
+        form = EmailAuthenticationForm(request, data=request.POST)
         if form.is_valid():
-            username = form.cleaned_data.get('username')
+            email = form.cleaned_data.get('username')  # The form field is named 'username' but contains email
             password = form.cleaned_data.get('password')
-            user = authenticate(username=username, password=password)
+            user = authenticate(request, username=email, password=password)
             if user is not None:
                 login(request, user)
-                messages.info(request, f"Welcome back, {username}!")
+                messages.success(request, f"Welcome back, {user.username}!")
                 return redirect('home')
             else:
-                messages.error(request, "Invalid username or password.")
+                messages.error(request, "Invalid email or password.")
         else:
-            messages.error(request, "Invalid username or password.")
+            messages.error(request, "Invalid email or password.")
     else:
-        form = AuthenticationForm()
+        form = EmailAuthenticationForm()
     
     return render(request, 'login.html', {'form': form})
 

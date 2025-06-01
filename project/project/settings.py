@@ -133,6 +133,12 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'landing_page'
 
+# Custom authentication backend
+AUTHENTICATION_BACKENDS = [
+    'app.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 # Email backend for development (console output)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
