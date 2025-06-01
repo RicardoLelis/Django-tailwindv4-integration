@@ -66,18 +66,149 @@
             </div>
 
             <!-- CTA Buttons -->
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="{% url 'rider_registration' %}" class="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white gradient-bg rounded-full overflow-hidden shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
-                    <span class="relative z-10">Register as a Rider</span>
-                    <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
-                </a>
+            <div class="glass-effect rounded-3xl p-8 max-w-2xl mx-auto shadow-xl">
+                <div class="text-center mb-6">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-2">Ready to Ride?</h3>
+                    <p class="text-gray-600">Join thousands of riders or sign in to book your next journey</p>
+                </div>
                 
-                <button class="inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-purple-600 bg-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
-                    Learn More
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <!-- New User -->
+                    <div class="text-center">
+                        <div class="mb-3">
+                            <svg class="w-12 h-12 text-purple-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                            </svg>
+                        </div>
+                        <h4 class="font-medium text-gray-800 mb-2">New to RideConnect?</h4>
+                        <a href="{% url 'rider_registration' %}" class="group relative inline-flex items-center justify-center px-6 py-3 text-sm font-medium text-white gradient-bg rounded-full overflow-hidden shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 w-full">
+                            <span class="relative z-10">Create Account</span>
+                            <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                        </a>
+                    </div>
+                    
+                    <!-- Existing User -->
+                    <div class="text-center">
+                        <div class="mb-3">
+                            <svg class="w-12 h-12 text-pink-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                            </svg>
+                        </div>
+                        <h4 class="font-medium text-gray-800 mb-2">Already a member?</h4>
+                        <a href="{% url 'login' %}" class="inline-flex items-center justify-center px-6 py-3 text-sm font-medium text-purple-600 bg-white border-2 border-purple-600 rounded-full shadow-lg hover:bg-purple-50 hover:shadow-xl transform hover:scale-105 transition-all duration-200 w-full">
+                            Sign In
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="text-center border-t pt-4">
+                    <button onclick="document.getElementById('learn-more').scrollIntoView({behavior: 'smooth'})" class="inline-flex items-center text-sm text-gray-600 hover:text-purple-600 transition-colors">
+                        Learn more about our services
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Learn More Section -->
+    <div id="learn-more" class="relative z-10 min-h-screen flex items-center justify-center px-4 py-16">
+        <div class="max-w-6xl w-full">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl md:text-5xl font-display font-bold mb-4">
+                    <span class="gradient-text">Why Choose RideConnect?</span>
+                </h2>
+                <p class="text-xl text-gray-700 max-w-3xl mx-auto">
+                    We're more than just a ride service. We're your partner in accessible, comfortable, and reliable transportation.
+                </p>
+            </div>
+            
+            <!-- Detailed Features Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                <!-- Feature 1 -->
+                <div class="glass-effect p-8 rounded-2xl">
+                    <div class="flex items-start">
+                        <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-xl font-semibold text-gray-800 mb-2">Accessibility First</h3>
+                            <p class="text-gray-600">Every vehicle in our fleet is equipped to handle various accessibility needs. From wheelchair ramps to audio assistance, we ensure everyone travels comfortably.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Feature 2 -->
+                <div class="glass-effect p-8 rounded-2xl">
+                    <div class="flex items-start">
+                        <div class="w-14 h-14 bg-pink-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg class="w-8 h-8 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-xl font-semibold text-gray-800 mb-2">Trained Professionals</h3>
+                            <p class="text-gray-600">Our drivers undergo specialized training in disability awareness and assistance. They're not just drivers; they're compassionate professionals who understand your needs.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Feature 3 -->
+                <div class="glass-effect p-8 rounded-2xl">
+                    <div class="flex items-start">
+                        <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-xl font-semibold text-gray-800 mb-2">Easy Booking</h3>
+                            <p class="text-gray-600">Book rides up to 7 days in advance with our simple interface. Track your ride in real-time and communicate special requirements effortlessly.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Feature 4 -->
+                <div class="glass-effect p-8 rounded-2xl">
+                    <div class="flex items-start">
+                        <div class="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-xl font-semibold text-gray-800 mb-2">Transparent Pricing</h3>
+                            <p class="text-gray-600">No hidden fees or surge pricing. We believe accessible transportation should be affordable for everyone. See your fare upfront before booking.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Testimonial -->
+            <div class="glass-effect rounded-3xl p-8 text-center max-w-3xl mx-auto">
+                <svg class="w-12 h-12 text-purple-400 mx-auto mb-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+                </svg>
+                <p class="text-lg text-gray-700 italic mb-4">
+                    "RideConnect has transformed my daily life. As a wheelchair user, I finally have a transportation service that truly understands and accommodates my needs. The drivers are always patient and helpful."
+                </p>
+                <p class="font-semibold text-gray-800">Sarah M.</p>
+                <p class="text-sm text-gray-600">RideConnect Member since 2023</p>
+            </div>
+            
+            <!-- Final CTA -->
+            <div class="text-center mt-12">
+                <p class="text-xl text-gray-700 mb-6">Ready to experience accessible transportation at its finest?</p>
+                <a href="{% url 'rider_registration' %}" class="inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white gradient-bg rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
+                    Get Started Today
                     <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                     </svg>
-                </button>
+                </a>
             </div>
         </div>
     </div>
