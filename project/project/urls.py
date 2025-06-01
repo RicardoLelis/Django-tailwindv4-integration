@@ -17,11 +17,22 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-from app.views import landing_page, rider_registration
+from app.views import (
+    landing_page, 
+    rider_registration, 
+    login_view, 
+    logout_view, 
+    home,
+    book_ride
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', landing_page, name='landing_page'),
     path('register/', rider_registration, name='rider_registration'),
+    path('login/', login_view, name='login'),
+    path('logout/', logout_view, name='logout'),
+    path('home/', home, name='home'),
+    path('book-ride/', book_ride, name='book_ride'),
     # path('app/', include('app.urls')),
 ]
