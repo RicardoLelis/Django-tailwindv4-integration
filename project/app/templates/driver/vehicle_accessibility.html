@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+
+{% block title %}Vehicle Accessibility Features - RideConnect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Progress Bar -->
+        <div class="max-w-4xl mx-auto mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h1 class="text-2xl font-bold text-gray-900">Vehicle Accessibility Features</h1>
+                <span class="text-sm text-gray-500">Step 3 of 3</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-purple-600 h-2 rounded-full" style="width: 100%"></div>
+            </div>
+        </div>
+
+        <div class="max-w-2xl mx-auto">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-2">Accessibility Features</h2>
+                <p class="text-gray-600 mb-8">Specify your vehicle's accessibility features for {{ vehicle.make }} {{ vehicle.model }}.</p>
+
+                <!-- Vehicle Summary -->
+                <div class="mb-6 p-4 bg-gray-50 rounded-xl">
+                    <h3 class="font-medium text-gray-900 mb-2">Vehicle Details</h3>
+                    <div class="text-sm text-gray-600">
+                        <span class="font-medium">{{ vehicle.year }} {{ vehicle.make }} {{ vehicle.model }}</span> • 
+                        <span class="text-purple-600">{{ vehicle.license_plate }}</span> • 
+                        <span>{{ vehicle.get_color_display }} {{ vehicle.get_vehicle_type_display }}</span>
+                    </div>
+                </div>
+
+                <!-- Error Messages -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="mb-4 p-4 rounded-lg {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-green-50 text-green-800 border border-green-200{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Accessibility Features -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">Core Accessibility Features</h3>
+                        
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="space-y-4">
+                                <div class="flex items-center">
+                                    {{ form.has_ramp }}
+                                    <label for="{{ form.has_ramp.id_for_label }}" class="ml-2 text-sm font-medium text-gray-700">
+                                        Wheelchair Ramp
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    {{ form.has_lift }}
+                                    <label for="{{ form.has_lift.id_for_label }}" class="ml-2 text-sm font-medium text-gray-700">
+                                        Wheelchair Lift
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    {{ form.has_lowered_floor }}
+                                    <label for="{{ form.has_lowered_floor.id_for_label }}" class="ml-2 text-sm font-medium text-gray-700">
+                                        Lowered Floor
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div class="flex items-center">
+                                    {{ form.has_swivel_seats }}
+                                    <label for="{{ form.has_swivel_seats.id_for_label }}" class="ml-2 text-sm font-medium text-gray-700">
+                                        Swivel Seats
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    {{ form.has_hand_controls }}
+                                    <label for="{{ form.has_hand_controls.id_for_label }}" class="ml-2 text-sm font-medium text-gray-700">
+                                        Hand Controls
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Capacity and Dimensions -->
+                        <div class="grid md:grid-cols-2 gap-4 mt-6">
+                            <div>
+                                <label for="{{ form.wheelchair_capacity.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Wheelchair Capacity *
+                                </label>
+                                {{ form.wheelchair_capacity }}
+                                <p class="text-sm text-gray-500 mt-1">Number of wheelchairs that can be accommodated</p>
+                                {% if form.wheelchair_capacity.errors %}
+                                    <div class="text-red-600 text-sm mt-1">{{ form.wheelchair_capacity.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div>
+                                <label for="{{ form.door_width_cm.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Door Width (cm)
+                                </label>
+                                {{ form.door_width_cm }}
+                                <p class="text-sm text-gray-500 mt-1">Minimum width for wheelchair access</p>
+                                {% if form.door_width_cm.errors %}
+                                    <div class="text-red-600 text-sm mt-1">{{ form.door_width_cm.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Features -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">Additional Features</h3>
+                        
+                        <div class="grid md:grid-cols-2 gap-3">
+                            {% for choice in form.extra_features %}
+                                <div class="flex items-center">
+                                    {{ choice.tag }}
+                                    <label for="{{ choice.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                                        {{ choice.choice_label }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% if form.extra_features.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.extra_features.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Form Errors -->
+                    {% if form.non_field_errors %}
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <h4 class="text-red-800 font-medium mb-2">Please correct the following errors:</h4>
+                            {% for error in form.non_field_errors %}
+                                <p class="text-red-600 text-sm">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Navigation Buttons -->
+                    <div class="flex justify-between pt-6 border-t">
+                        <a href="{% url 'driver_register_vehicle' %}" class="bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-xl hover:bg-gray-400 transition-colors">
+                            Back
+                        </a>
+                        <button type="submit" class="bg-green-600 text-white font-semibold py-3 px-8 rounded-xl hover:bg-green-700 transition-colors">
+                            Complete Vehicle Registration
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Help Section -->
+            <div class="mt-8 bg-green-50 border border-green-200 rounded-xl p-6">
+                <h3 class="text-lg font-semibold text-green-900 mb-2">🎉 Almost Done!</h3>
+                <p class="text-green-800 text-sm mb-4">
+                    After submitting this form, you'll be able to:
+                </p>
+                <ul class="text-green-700 text-sm space-y-1">
+                    <li>• Upload vehicle photos and documentation</li>
+                    <li>• Complete accessibility training modules</li>
+                    <li>• Start accepting ride requests once approved</li>
+                    <li>• Earn €22-24 per trip on average</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-save functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const inputs = form.querySelectorAll('input, select, textarea');
+    
+    // Save to localStorage every 30 seconds
+    setInterval(() => {
+        const formData = {};
+        inputs.forEach(input => {
+            if (input.type === 'checkbox') {
+                formData[input.name] = input.checked;
+            } else {
+                formData[input.name] = input.value;
+            }
+        });
+        localStorage.setItem('driver_accessibility_form', JSON.stringify(formData));
+    }, 30000);
+    
+    // Restore from localStorage on load
+    const savedData = localStorage.getItem('driver_accessibility_form');
+    if (savedData) {
+        try {
+            const formData = JSON.parse(savedData);
+            inputs.forEach(input => {
+                if (formData[input.name] !== undefined) {
+                    if (input.type === 'checkbox') {
+                        input.checked = formData[input.name];
+                    } else {
+                        input.value = formData[input.name];
+                    }
+                }
+            });
+        } catch (e) {
+            console.log('Could not restore form data');
+        }
+    }
+    
+    // Clear localStorage on successful submit
+    form.addEventListener('submit', function() {
+        localStorage.removeItem('driver_accessibility_form');
+    });
+});
+</script>
+{% endblock %}

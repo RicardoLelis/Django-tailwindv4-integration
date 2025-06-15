@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+
+{% block title %}Driver Registration - Professional Information{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Progress Bar -->
+        <div class="max-w-4xl mx-auto mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h1 class="text-2xl font-bold text-gray-900">Driver Application</h1>
+                <span class="text-sm text-gray-500">Step 2 of 5</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-purple-600 h-2 rounded-full" style="width: 40%"></div>
+            </div>
+        </div>
+
+        <div class="max-w-2xl mx-auto">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-2">Professional Information</h2>
+                <p class="text-gray-600 mb-8">Tell us about your driving experience and availability preferences.</p>
+
+                <!-- Error Messages -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="mb-4 p-4 rounded-lg {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-green-50 text-green-800 border border-green-200{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post" class="space-y-8">
+                    {% csrf_token %}
+                    
+                    <!-- Experience Section -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">Driving Experience</h3>
+                        
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="{{ form.years_driving.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Years of Professional Driving *
+                                </label>
+                                {{ form.years_driving }}
+                                {% if form.years_driving.errors %}
+                                    <div class="text-red-600 text-sm mt-1">{{ form.years_driving.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div>
+                                <label for="{{ form.disability_experience.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Experience with Disabled Passengers *
+                                </label>
+                                {{ form.disability_experience }}
+                                {% if form.disability_experience.errors %}
+                                    <div class="text-red-600 text-sm mt-1">{{ form.disability_experience.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                                Previous Platforms (check all that apply)
+                            </label>
+                            <div class="grid grid-cols-2 gap-3">
+                                {% for choice in form.previous_platforms %}
+                                    <div class="flex items-center">
+                                        {{ choice.tag }}
+                                        <label for="{{ choice.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                                            {{ choice.choice_label }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% if form.previous_platforms.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.previous_platforms.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                                Languages Spoken (check all that apply)
+                            </label>
+                            <div class="grid grid-cols-2 gap-3">
+                                {% for choice in form.languages %}
+                                    <div class="flex items-center">
+                                        {{ choice.tag }}
+                                        <label for="{{ choice.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                                            {{ choice.choice_label }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% if form.languages.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.languages.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Availability Section -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">Availability Preferences</h3>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                                Preferred Working Hours (check all that apply)
+                            </label>
+                            <div class="space-y-2">
+                                {% for choice in form.working_hours %}
+                                    <div class="flex items-center">
+                                        {{ choice.tag }}
+                                        <label for="{{ choice.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                                            {{ choice.choice_label }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% if form.working_hours.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.working_hours.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                                Preferred Working Days (check all that apply)
+                            </label>
+                            <div class="grid grid-cols-2 gap-3">
+                                {% for choice in form.working_days %}
+                                    <div class="flex items-center">
+                                        {{ choice.tag }}
+                                        <label for="{{ choice.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                                            {{ choice.choice_label }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% if form.working_days.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.working_days.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.expected_trips_per_week.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Expected Trips per Week *
+                            </label>
+                            {{ form.expected_trips_per_week }}
+                            <p class="text-sm text-gray-500 mt-1">Estimate based on your availability (minimum 10)</p>
+                            {% if form.expected_trips_per_week.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.expected_trips_per_week.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Form Errors -->
+                    {% if form.non_field_errors %}
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <h4 class="text-red-800 font-medium mb-2">Please correct the following errors:</h4>
+                            {% for error in form.non_field_errors %}
+                                <p class="text-red-600 text-sm">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Navigation Buttons -->
+                    <div class="flex justify-between pt-6 border-t">
+                        <a href="{% url 'driver_dashboard' %}" class="bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-xl hover:bg-gray-400 transition-colors">
+                            Back to Dashboard
+                        </a>
+                        <button type="submit" class="bg-purple-600 text-white font-semibold py-3 px-8 rounded-xl hover:bg-purple-700 transition-colors">
+                            Continue to Documents
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Info Section -->
+            <div class="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6">
+                <h3 class="text-lg font-semibold text-blue-900 mb-2">💡 Tips for Better Matching</h3>
+                <ul class="text-blue-800 text-sm space-y-1">
+                    <li>• Select multiple languages to serve more passengers</li>
+                    <li>• Flexible hours lead to more ride opportunities</li>
+                    <li>• Previous experience helps with faster approval</li>
+                    <li>• Higher trip expectations show commitment to the platform</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-save functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const inputs = form.querySelectorAll('input, select, textarea');
+    
+    // Save to localStorage every 30 seconds
+    setInterval(() => {
+        const formData = {};
+        inputs.forEach(input => {
+            if (input.type === 'checkbox') {
+                formData[input.name] = input.checked;
+            } else if (input.type === 'radio') {
+                if (input.checked) {
+                    formData[input.name] = input.value;
+                }
+            } else {
+                formData[input.name] = input.value;
+            }
+        });
+        localStorage.setItem('driver_professional_form', JSON.stringify(formData));
+    }, 30000);
+    
+    // Restore from localStorage on load
+    const savedData = localStorage.getItem('driver_professional_form');
+    if (savedData) {
+        try {
+            const formData = JSON.parse(savedData);
+            inputs.forEach(input => {
+                if (formData[input.name] !== undefined) {
+                    if (input.type === 'checkbox') {
+                        input.checked = formData[input.name];
+                    } else if (input.type === 'radio') {
+                        input.checked = input.value === formData[input.name];
+                    } else {
+                        input.value = formData[input.name];
+                    }
+                }
+            });
+        } catch (e) {
+            console.log('Could not restore form data');
+        }
+    }
+    
+    // Clear localStorage on successful submit
+    form.addEventListener('submit', function() {
+        localStorage.removeItem('driver_professional_form');
+    });
+});
+</script>
+{% endblock %}

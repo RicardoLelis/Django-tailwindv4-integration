@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+
+{% block title %}Vehicle Registration - RideConnect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Progress Bar -->
+        <div class="max-w-4xl mx-auto mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h1 class="text-2xl font-bold text-gray-900">Vehicle Registration</h1>
+                <span class="text-sm text-gray-500">Step 2 of 3</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-purple-600 h-2 rounded-full" style="width: 66%"></div>
+            </div>
+        </div>
+
+        <div class="max-w-2xl mx-auto">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-2">Vehicle Information</h2>
+                <p class="text-gray-600 mb-8">Add your vehicle details and accessibility features.</p>
+
+                <!-- Error Messages -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="mb-4 p-4 rounded-lg {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-green-50 text-green-800 border border-green-200{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Vehicle Basic Info -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">Vehicle Details</h3>
+                        
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="{{ form.license_plate.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    License Plate *
+                                </label>
+                                {{ form.license_plate }}
+                                <p class="text-sm text-gray-500 mt-1">Portuguese format: XX-XX-XX</p>
+                                {% if form.license_plate.errors %}
+                                    <div class="text-red-600 text-sm mt-1">{{ form.license_plate.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div>
+                                <label for="{{ form.vehicle_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Vehicle Type *
+                                </label>
+                                {{ form.vehicle_type }}
+                                {% if form.vehicle_type.errors %}
+                                    <div class="text-red-600 text-sm mt-1">{{ form.vehicle_type.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="grid md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="{{ form.make.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Make *
+                                </label>
+                                {{ form.make }}
+                                {% if form.make.errors %}
+                                    <div class="text-red-600 text-sm mt-1">{{ form.make.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div>
+                                <label for="{{ form.model.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Model *
+                                </label>
+                                {{ form.model }}
+                                {% if form.model.errors %}
+                                    <div class="text-red-600 text-sm mt-1">{{ form.model.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div>
+                                <label for="{{ form.year.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Year *
+                                </label>
+                                {{ form.year }}
+                                {% if form.year.errors %}
+                                    <div class="text-red-600 text-sm mt-1">{{ form.year.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.color.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Color *
+                            </label>
+                            {{ form.color }}
+                            {% if form.color.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.color.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Documentation -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">Documentation</h3>
+                        
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="{{ form.insurance_expiry.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Insurance Expiry Date *
+                                </label>
+                                {{ form.insurance_expiry }}
+                                {% if form.insurance_expiry.errors %}
+                                    <div class="text-red-600 text-sm mt-1">{{ form.insurance_expiry.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div>
+                                <label for="{{ form.inspection_expiry.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Inspection Expiry Date *
+                                </label>
+                                {{ form.inspection_expiry }}
+                                {% if form.inspection_expiry.errors %}
+                                    <div class="text-red-600 text-sm mt-1">{{ form.inspection_expiry.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Errors -->
+                    {% if form.non_field_errors %}
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <h4 class="text-red-800 font-medium mb-2">Please correct the following errors:</h4>
+                            {% for error in form.non_field_errors %}
+                                <p class="text-red-600 text-sm">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Navigation Buttons -->
+                    <div class="flex justify-between pt-6 border-t">
+                        <a href="{% url 'driver_register_basic' %}" class="bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-xl hover:bg-gray-400 transition-colors">
+                            Back
+                        </a>
+                        <button type="submit" class="bg-purple-600 text-white font-semibold py-3 px-8 rounded-xl hover:bg-purple-700 transition-colors">
+                            Continue to Accessibility Features
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Help Section -->
+            <div class="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6">
+                <h3 class="text-lg font-semibold text-blue-900 mb-2">📋 Required Documents</h3>
+                <p class="text-blue-800 text-sm mb-4">
+                    You'll need to upload these documents in the next steps:
+                </p>
+                <ul class="text-blue-700 text-sm space-y-1">
+                    <li>• <strong>Vehicle Registration (DUA)</strong> - Current vehicle ownership document</li>
+                    <li>• <strong>Insurance Certificate</strong> - Valid insurance covering commercial use</li>
+                    <li>• <strong>Inspection Certificate (IPO)</strong> - Current vehicle inspection</li>
+                    <li>• <strong>Accessibility Certification</strong> - If applicable for your vehicle type</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-save functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const inputs = form.querySelectorAll('input, select, textarea');
+    
+    // Save to localStorage every 30 seconds
+    setInterval(() => {
+        const formData = {};
+        inputs.forEach(input => {
+            if (input.type === 'checkbox') {
+                formData[input.name] = input.checked;
+            } else {
+                formData[input.name] = input.value;
+            }
+        });
+        localStorage.setItem('driver_vehicle_form', JSON.stringify(formData));
+    }, 30000);
+    
+    // Restore from localStorage on load
+    const savedData = localStorage.getItem('driver_vehicle_form');
+    if (savedData) {
+        try {
+            const formData = JSON.parse(savedData);
+            inputs.forEach(input => {
+                if (formData[input.name] !== undefined) {
+                    if (input.type === 'checkbox') {
+                        input.checked = formData[input.name];
+                    } else {
+                        input.value = formData[input.name];
+                    }
+                }
+            });
+        } catch (e) {
+            console.log('Could not restore form data');
+        }
+    }
+    
+    // Clear localStorage on successful submit
+    form.addEventListener('submit', function() {
+        localStorage.removeItem('driver_vehicle_form');
+    });
+});
+</script>
+{% endblock %}

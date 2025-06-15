@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+
+{% block title %}Driver Registration - Basic Information{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Progress Bar -->
+        <div class="max-w-4xl mx-auto mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h1 class="text-2xl font-bold text-gray-900">Complete Your Profile</h1>
+                <span class="text-sm text-gray-500">Step 1 of 3</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-purple-600 h-2 rounded-full" style="width: 33%"></div>
+            </div>
+        </div>
+
+        <div class="max-w-2xl mx-auto">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-2">Complete Your Profile</h2>
+                <p class="text-gray-600 mb-8">Add your name and create a password to complete your account setup.</p>
+                
+                <!-- Welcome back message for users coming from email links -->
+                <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                        </svg>
+                        <div>
+                            <h3 class="font-medium text-blue-900">Welcome!</h3>
+                            <p class="text-sm text-blue-800 mt-1">
+                                Complete your profile to become a RideConnect driver. All information is securely encrypted and will only be used for verification purposes.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error Messages -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="mb-4 p-4 rounded-lg {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-green-50 text-green-800 border border-green-200{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <!-- CSRF Error Message (will be shown by JavaScript if needed) -->
+                <div id="csrf-error" class="mb-4 p-4 rounded-lg bg-red-50 text-red-800 border border-red-200 hidden">
+                    <strong>Session Expired:</strong> Your session has expired. Please refresh the page and try again.
+                    <button onclick="window.location.reload()" class="ml-2 text-red-600 underline">Refresh Page</button>
+                </div>
+
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Account Information Section -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">Account Setup</h3>
+                        
+                        <!-- Show existing information (read-only) -->
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-4 rounded-xl">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                                <div class="text-gray-800 font-medium">{{ request.user.email }}</div>
+                                <p class="text-sm text-gray-500 mt-1">✓ Verified</p>
+                            </div>
+                            
+                            <div class="bg-gray-50 p-4 rounded-xl">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                                <div class="text-gray-800 font-medium">{{ request.user.driver.phone_number }}</div>
+                                <p class="text-sm text-gray-500 mt-1">Fleet size: {{ request.user.driver.get_fleet_size_display }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="{{ basic_form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    First Name *
+                                </label>
+                                {{ basic_form.first_name }}
+                                {% if basic_form.first_name.errors %}
+                                    <div class="text-red-600 text-sm mt-1">{{ basic_form.first_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div>
+                                <label for="{{ basic_form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Last Name *
+                                </label>
+                                {{ basic_form.last_name }}
+                                {% if basic_form.last_name.errors %}
+                                    <div class="text-red-600 text-sm mt-1">{{ basic_form.last_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="{{ basic_form.password.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Create Password *
+                                </label>
+                                {{ basic_form.password }}
+                                {% if basic_form.password.errors %}
+                                    <div class="text-red-600 text-sm mt-1">{{ basic_form.password.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div>
+                                <label for="{{ basic_form.password2.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Confirm Password *
+                                </label>
+                                {{ basic_form.password2 }}
+                                {% if basic_form.password2.errors %}
+                                    <div class="text-red-600 text-sm mt-1">{{ basic_form.password2.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Eligibility Section -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">Eligibility Check</h3>
+                        <p class="text-sm text-gray-600">Please confirm you meet the following requirements to continue:</p>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                {{ eligibility_form.has_portuguese_license }}
+                                <label for="{{ eligibility_form.has_portuguese_license.id_for_label }}" class="ml-3 text-sm text-gray-700">
+                                    {{ eligibility_form.has_portuguese_license.label }}
+                                </label>
+                            </div>
+                            {% if eligibility_form.has_portuguese_license.errors %}
+                                <div class="text-red-600 text-sm ml-8">{{ eligibility_form.has_portuguese_license.errors }}</div>
+                            {% endif %}
+                            
+                            <div class="flex items-start">
+                                {{ eligibility_form.has_accessible_vehicle }}
+                                <label for="{{ eligibility_form.has_accessible_vehicle.id_for_label }}" class="ml-3 text-sm text-gray-700">
+                                    {{ eligibility_form.has_accessible_vehicle.label }}
+                                </label>
+                            </div>
+                            {% if eligibility_form.has_accessible_vehicle.errors %}
+                                <div class="text-red-600 text-sm ml-8">{{ eligibility_form.has_accessible_vehicle.errors }}</div>
+                            {% endif %}
+                            
+                            <div class="flex items-start">
+                                {{ eligibility_form.authorized_to_work }}
+                                <label for="{{ eligibility_form.authorized_to_work.id_for_label }}" class="ml-3 text-sm text-gray-700">
+                                    {{ eligibility_form.authorized_to_work.label }}
+                                </label>
+                            </div>
+                            {% if eligibility_form.authorized_to_work.errors %}
+                                <div class="text-red-600 text-sm ml-8">{{ eligibility_form.authorized_to_work.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Form Errors -->
+                    {% if basic_form.non_field_errors or eligibility_form.non_field_errors %}
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <h4 class="text-red-800 font-medium mb-2">Please correct the following errors:</h4>
+                            {% for error in basic_form.non_field_errors %}
+                                <p class="text-red-600 text-sm">{{ error }}</p>
+                            {% endfor %}
+                            {% for error in eligibility_form.non_field_errors %}
+                                <p class="text-red-600 text-sm">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Navigation Buttons -->
+                    <div class="flex justify-between pt-6 border-t">
+                        <a href="{% url 'driver_landing' %}" class="bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-xl hover:bg-gray-400 transition-colors">
+                            Back
+                        </a>
+                        <button type="submit" class="bg-purple-600 text-white font-semibold py-3 px-8 rounded-xl hover:bg-purple-700 transition-colors">
+                            Create Account & Continue
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Help Section -->
+            <div class="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6">
+                <h3 class="text-lg font-semibold text-blue-900 mb-2">Need Help?</h3>
+                <p class="text-blue-800 text-sm mb-4">
+                    If you don't meet all requirements yet, here's how you can qualify:
+                </p>
+                <ul class="text-blue-700 text-sm space-y-1">
+                    <li>• <strong>No Portuguese license?</strong> Contact IMTT for license conversion/application</li>
+                    <li>• <strong>No accessible vehicle?</strong> Consider vehicle adaptation grants or leasing programs</li>
+                    <li>• <strong>Work authorization?</strong> Contact SEF for residence/work permit information</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-save functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const inputs = form.querySelectorAll('input, select, textarea');
+    
+    // Save to localStorage every 30 seconds
+    setInterval(() => {
+        const formData = {};
+        inputs.forEach(input => {
+            if (input.type === 'checkbox') {
+                formData[input.name] = input.checked;
+            } else {
+                formData[input.name] = input.value;
+            }
+        });
+        localStorage.setItem('driver_basic_form', JSON.stringify(formData));
+    }, 30000);
+    
+    // Restore from localStorage on load
+    const savedData = localStorage.getItem('driver_basic_form');
+    if (savedData) {
+        try {
+            const formData = JSON.parse(savedData);
+            inputs.forEach(input => {
+                if (formData[input.name] !== undefined) {
+                    if (input.type === 'checkbox') {
+                        input.checked = formData[input.name];
+                    } else {
+                        input.value = formData[input.name];
+                    }
+                }
+            });
+        } catch (e) {
+            console.log('Could not restore form data');
+        }
+    }
+    
+    // Handle form submission with CSRF error detection
+    form.addEventListener('submit', function(e) {
+        // Hide any previous CSRF errors
+        document.getElementById('csrf-error').classList.add('hidden');
+        
+        // Clear localStorage on successful submit
+        localStorage.removeItem('driver_basic_form');
+    });
+    
+    // Check for CSRF errors in URL (if redirected back due to CSRF failure)
+    if (window.location.search.includes('csrf_failure')) {
+        document.getElementById('csrf-error').classList.remove('hidden');
+        window.scrollTo(0, 0);
+    }
+});
+</script>
+{% endblock %}

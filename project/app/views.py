@@ -1,20 +1,49 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.utils import timezone
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from django.middleware.csrf import get_token
+from django.core.files.storage import default_storage
+from django.core.mail import send_mail
+from django.conf import settings
+from django.urls import reverse
 from datetime import datetime, timedelta
-from .forms import RiderRegistrationForm, EmailAuthenticationForm
-from .models import Rider, Ride
+import json
+import os
+import secrets
+from .forms import (
+    RiderRegistrationForm, EmailAuthenticationForm, DriverBasicInfoForm,
+    DriverEligibilityForm, DriverProfessionalInfoForm, DriverDocumentUploadForm,
+    BackgroundCheckConsentForm, VehicleBasicInfoForm, VehicleAccessibilityForm,
+    VehicleSafetyEquipmentForm, VehicleDocumentUploadForm, VehiclePhotoUploadForm,
+    DriverInitialRegistrationForm, DriverCompleteProfileForm
+)
+from .models import (
+    Rider, Ride, Driver, Vehicle, DriverDocument, VehicleDocument, 
+    VehiclePhoto, TrainingModule, DriverTraining
+)
+
+def get_user_home_url(user):
+    """Helper function to determine the correct home page for a user"""
+    try:
+        driver = user.driver
+        return 'driver_dashboard'
+    except Driver.DoesNotExist:
+        return 'home'
 
 def landing_page(request):
     if request.user.is_authenticated:
-        return redirect('home')
+        return redirect(get_user_home_url(request.user))
     return render(request, "landing.html")
 
 def rider_registration(request):
     if request.user.is_authenticated:
-        return redirect('home')
+        return redirect(get_user_home_url(request.user))
         
     if request.method == 'POST':
         form = RiderRegistrationForm(request.POST)
@@ -29,7 +58,12 @@ def rider_registration(request):
 
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('home')
+        # Check if user is a driver and redirect accordingly
+        try:
+            driver = request.user.driver
+            return redirect('driver_dashboard')
+        except Driver.DoesNotExist:
+            return redirect('home')
         
     if request.method == 'POST':
         form = EmailAuthenticationForm(request, data=request.POST)
@@ -40,7 +74,14 @@ def login_view(request):
             if user is not None:
                 login(request, user)
                 messages.success(request, f"Welcome back, {user.username}!")
-                return redirect('home')
+                
+                # Check if user is a driver and redirect accordingly
+                try:
+                    driver = user.driver
+                    return redirect('driver_dashboard')
+                except Driver.DoesNotExist:
+                    # User is a rider or needs to create rider profile
+                    return redirect('home')
             else:
                 messages.error(request, "Invalid email or password.")
         else:
@@ -57,6 +98,14 @@ def logout_view(request):
 
 @login_required
 def home(request):
+    # Check if user is actually a driver - if so, redirect them
+    try:
+        driver = request.user.driver
+        return redirect('driver_dashboard')
+    except Driver.DoesNotExist:
+        pass
+    
+    # User is a rider
     try:
         rider = request.user.rider
     except Rider.DoesNotExist:
@@ -127,3 +176,894 @@ def book_ride(request):
             return redirect('home')
     
     return redirect('home')
+
+
+# Driver Registration Views
+
+def driver_landing(request):
+    """Driver registration landing page"""
+    if request.user.is_authenticated:
+        try:
+            driver = request.user.driver
+            return redirect('driver_dashboard')
+        except Driver.DoesNotExist:
+            pass
+    
+    return render(request, 'driver/landing.html')
+
+
+def driver_initial_registration(request):
+    """Simplified initial registration - just email, phone, and fleet size"""
+    if request.method == 'POST':
+        form = DriverInitialRegistrationForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            
+            # Check if user already exists but is inactive (pending verification)
+            existing_user = User.objects.filter(email=email, is_active=False).first()
+            if existing_user:
+                # Resend verification email
+                try:
+                    driver = existing_user.driver
+                    # Update phone and fleet size in case they changed
+                    driver.phone_number = form.cleaned_data['phone_number']
+                    driver.fleet_size = form.cleaned_data['fleet_size']
+                    driver.email_verification_sent = timezone.now()
+                    driver.save()
+                    
+                    # Resend verification email
+                    verification_url = request.build_absolute_uri(
+                        reverse('driver_verify_email', args=[driver.email_verification_token])
+                    )
+                    
+                    send_mail(
+                        'Verify your email - RideConnect Driver',
+                        f'''
+                        Welcome back to RideConnect!
+                        
+                        Please click the link below to verify your email address:
+                        {verification_url}
+                        
+                        This link will expire in 24 hours.
+                        
+                        Best regards,
+                        The RideConnect Team
+                        ''',
+                        settings.DEFAULT_FROM_EMAIL,
+                        [email],
+                        fail_silently=False,
+                    )
+                    
+                    messages.info(request, 'A new verification email has been sent. Please check your inbox.')
+                    return redirect('driver_landing')
+                except Driver.DoesNotExist:
+                    # User exists but no driver profile - delete and recreate
+                    existing_user.delete()
+            
+            # Generate a unique username from email
+            username = email.split('@')[0] + '_' + secrets.token_hex(4)
+            
+            # Create user without password (they'll set it after email verification)
+            user = User.objects.create(
+                username=username,
+                email=email,
+                is_active=False  # Inactive until email verified
+            )
+            
+            # Generate verification token
+            verification_token = secrets.token_urlsafe(32)
+            
+            # Create driver profile
+            driver = Driver.objects.create(
+                user=user,
+                phone_number=form.cleaned_data['phone_number'],
+                fleet_size=form.cleaned_data['fleet_size'],
+                email_verification_token=verification_token,
+                email_verification_sent=timezone.now(),
+                application_status='started'
+            )
+            
+            # Send verification email
+            verification_url = request.build_absolute_uri(
+                reverse('driver_verify_email', args=[verification_token])
+            )
+            
+            send_mail(
+                'Verify your email - RideConnect Driver',
+                f'''
+                Welcome to RideConnect!
+                
+                Please click the link below to verify your email address:
+                {verification_url}
+                
+                This link will expire in 24 hours.
+                
+                Best regards,
+                The RideConnect Team
+                ''',
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+            
+            messages.success(request, 'Thank you for registering! Please check your email to verify your account.')
+            return redirect('driver_landing')
+    else:
+        form = DriverInitialRegistrationForm()
+    
+    return render(request, 'driver/initial_registration.html', {'form': form})
+
+
+def driver_verify_email(request, token):
+    """Verify email and activate account"""
+    try:
+        driver = Driver.objects.get(email_verification_token=token)
+        
+        # Check if token is expired (24 hours)
+        if driver.email_verification_sent < timezone.now() - timedelta(hours=24):
+            messages.error(request, 'This verification link has expired. Please register again.')
+            return redirect('driver_initial_registration')
+        
+        # Activate user
+        driver.user.is_active = True
+        driver.user.save()
+        
+        # Update driver status
+        driver.email_verified = True
+        driver.application_status = 'email_verified'
+        
+        # Generate registration completion token
+        registration_token = secrets.token_urlsafe(32)
+        driver.registration_token = registration_token
+        driver.registration_token_created = timezone.now()
+        driver.save()
+        
+        # Send registration completion email
+        registration_url = request.build_absolute_uri(
+            reverse('driver_complete_registration', args=[registration_token])
+        )
+        
+        send_mail(
+            'Complete your registration - RideConnect Driver',
+            f'''
+            Your email has been verified successfully!
+            
+            Click the link below to complete your driver registration:
+            {registration_url}
+            
+            You'll need to provide:
+            - Vehicle information and photos
+            - Driver's license
+            - Operating licenses
+            - Insurance documentation
+            
+            This link will expire in 7 days.
+            
+            Best regards,
+            The RideConnect Team
+            ''',
+            settings.DEFAULT_FROM_EMAIL,
+            [driver.user.email],
+            fail_silently=False,
+        )
+        
+        messages.success(request, 'Email verified! Check your inbox for the link to complete your registration.')
+        return redirect('driver_landing')
+        
+    except Driver.DoesNotExist:
+        messages.error(request, 'Invalid verification link.')
+        return redirect('driver_landing')
+
+
+def driver_complete_registration(request, token):
+    """Complete registration after email verification"""
+    try:
+        driver = Driver.objects.get(registration_token=token)
+        
+        # Check if token is expired (7 days)
+        if driver.registration_token_created < timezone.now() - timedelta(days=7):
+            messages.error(request, 'This registration link has expired.')
+            return redirect('driver_landing')
+        
+        # Log the user in with explicit backend
+        backend = 'django.contrib.auth.backends.ModelBackend'
+        login(request, driver.user, backend=backend)
+        
+        # Redirect to the full registration flow
+        return redirect('driver_register_basic')
+        
+    except Driver.DoesNotExist:
+        messages.error(request, 'Invalid registration link.')
+        return redirect('driver_landing')
+
+
+@ensure_csrf_cookie
+def driver_register_basic(request):
+    """Phase 1: Basic account creation - now used after email verification"""
+    if not request.user.is_authenticated:
+        messages.error(request, 'Please access this page through the link in your email.')
+        return redirect('driver_landing')
+    
+    try:
+        driver = request.user.driver
+        # Allow access if coming from email verification or if already started
+        if driver.application_status not in ['email_verified', 'started']:
+            return redirect('driver_dashboard')
+    except Driver.DoesNotExist:
+        messages.error(request, 'Driver profile not found.')
+        return redirect('driver_landing')
+    
+    # Ensure CSRF token is available
+    get_token(request)
+    
+    if request.method == 'POST':
+        basic_form = DriverCompleteProfileForm(request.POST, instance=request.user)
+        eligibility_form = DriverEligibilityForm(request.POST)
+        
+        if basic_form.is_valid() and eligibility_form.is_valid():
+            # Check eligibility requirements
+            if not all([
+                eligibility_form.cleaned_data['has_portuguese_license'],
+                eligibility_form.cleaned_data['has_accessible_vehicle'],
+                eligibility_form.cleaned_data['authorized_to_work']
+            ]):
+                messages.error(request, 'You must meet all eligibility requirements to continue.')
+                return render(request, 'driver/register_basic.html', {
+                    'basic_form': basic_form,
+                    'eligibility_form': eligibility_form
+                })
+            
+            # Update user info (including password)
+            user = basic_form.save()
+            
+            # Update driver profile
+            driver.has_portuguese_license = True
+            driver.has_accessible_vehicle = True
+            driver.authorized_to_work = True
+            driver.application_status = 'started'
+            driver.save()
+            
+            # Re-authenticate user with new password
+            backend = 'django.contrib.auth.backends.ModelBackend'
+            login(request, user, backend=backend)
+            
+            messages.success(request, 'Account created! Now please upload your documents.')
+            return redirect('driver_upload_documents')
+    else:
+        basic_form = DriverCompleteProfileForm(instance=request.user)
+        eligibility_form = DriverEligibilityForm()
+    
+    return render(request, 'driver/register_basic.html', {
+        'basic_form': basic_form,
+        'eligibility_form': eligibility_form
+    })
+
+
+@login_required
+def driver_register_professional(request):
+    """Phase 2: Professional information"""
+    try:
+        driver = request.user.driver
+        if driver.application_status not in ['started', 'documents_uploaded']:
+            return redirect('driver_dashboard')
+    except Driver.DoesNotExist:
+        return redirect('driver_register_basic')
+    
+    if request.method == 'POST':
+        form = DriverProfessionalInfoForm(request.POST, instance=driver)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Professional information saved! Next, please upload your documents.')
+            return redirect('driver_upload_documents')
+    else:
+        form = DriverProfessionalInfoForm(instance=driver)
+    
+    return render(request, 'driver/register_professional.html', {'form': form})
+
+
+@login_required 
+def driver_upload_documents(request):
+    """Phase 2: Document upload"""
+    try:
+        driver = request.user.driver
+        if driver.application_status not in ['started', 'documents_uploaded']:
+            return redirect('driver_dashboard')
+    except Driver.DoesNotExist:
+        return redirect('driver_register_basic')
+    
+    # Get existing documents
+    existing_docs = {doc.document_type: doc for doc in driver.documents.all()}
+    required_docs = ['driving_license_front', 'driving_license_back', 'citizen_card', 'proof_of_address']
+    
+    if request.method == 'POST':
+        # Check if this is a bulk upload
+        if request.POST.get('bulk_upload') == 'true':
+            uploaded_count = 0
+            
+            # Process each document type
+            for doc_type in required_docs:
+                file_key = f"{doc_type}_file"
+                if file_key in request.FILES:
+                    # Delete existing document of same type
+                    if doc_type in existing_docs:
+                        existing_docs[doc_type].delete()
+                    
+                    # Create new document
+                    DriverDocument.objects.create(
+                        driver=driver,
+                        document_type=doc_type,
+                        file=request.FILES[file_key]
+                    )
+                    uploaded_count += 1
+            
+            # Check if all required documents are now uploaded
+            current_docs = set(driver.documents.values_list('document_type', flat=True))
+            if all(doc in current_docs for doc in required_docs):
+                driver.application_status = 'documents_uploaded'
+                driver.save()
+                messages.success(request, 'All documents uploaded successfully! Please provide background check consent.')
+                return redirect('driver_background_consent')
+            else:
+                if uploaded_count > 0:
+                    messages.success(request, f'{uploaded_count} document(s) uploaded successfully!')
+                else:
+                    messages.warning(request, 'No documents were selected for upload.')
+                return redirect('driver_upload_documents')
+        else:
+            # Legacy single document upload (kept for backward compatibility)
+            doc_type = request.POST.get('document_type')
+            if doc_type and 'file' in request.FILES:
+                # Delete existing document of same type
+                if doc_type in existing_docs:
+                    existing_docs[doc_type].delete()
+                
+                # Create new document
+                DriverDocument.objects.create(
+                    driver=driver,
+                    document_type=doc_type,
+                    file=request.FILES['file']
+                )
+                
+                # Check if all required documents are uploaded
+                current_docs = set(driver.documents.values_list('document_type', flat=True))
+                if all(doc in current_docs for doc in required_docs):
+                    driver.application_status = 'documents_uploaded'
+                    driver.save()
+                    messages.success(request, 'All documents uploaded! Please provide background check consent.')
+                    return redirect('driver_background_consent')
+                else:
+                    messages.success(request, f'Document uploaded successfully!')
+                    return redirect('driver_upload_documents')
+    
+    # Prepare document status
+    doc_status = {}
+    for doc_type, display_name in DriverDocument.DOCUMENT_TYPES:
+        doc_status[doc_type] = {
+            'name': display_name,
+            'uploaded': doc_type in existing_docs,
+            'required': doc_type in required_docs
+        }
+    
+    return render(request, 'driver/upload_documents.html', {
+        'doc_status': doc_status,
+        'progress': len(existing_docs) / len(required_docs) * 100
+    })
+
+
+@login_required
+def driver_background_consent(request):
+    """Phase 2: Background check consent"""
+    try:
+        driver = request.user.driver
+        if driver.application_status != 'documents_uploaded':
+            return redirect('driver_dashboard')
+    except Driver.DoesNotExist:
+        return redirect('driver_register_basic')
+    
+    if request.method == 'POST':
+        form = BackgroundCheckConsentForm(request.POST)
+        if form.is_valid():
+            driver.background_check_consent = True
+            driver.application_status = 'background_check_pending'
+            driver.save()
+            messages.success(request, 'Consent recorded! Now let\'s register your vehicle.')
+            return redirect('driver_register_vehicle')
+    else:
+        form = BackgroundCheckConsentForm()
+    
+    return render(request, 'driver/background_consent.html', {'form': form})
+
+
+@login_required
+def driver_register_vehicle(request):
+    """Phase 3: Vehicle registration"""
+    try:
+        driver = request.user.driver
+        # Only allow vehicle registration if background check is approved
+        if driver.application_status == 'background_check_pending' and driver.background_check_status != 'approved':
+            messages.warning(request, 'Please wait for your background check to be approved before registering a vehicle.')
+            return redirect('driver_dashboard')
+        if driver.application_status not in ['background_check_pending', 'training_in_progress']:
+            return redirect('driver_dashboard')
+    except Driver.DoesNotExist:
+        return redirect('driver_register_basic')
+    
+    # Check if driver already has a vehicle
+    if driver.vehicles.exists():
+        return redirect('driver_vehicle_accessibility')
+    
+    if request.method == 'POST':
+        form = VehicleBasicInfoForm(request.POST)
+        if form.is_valid():
+            vehicle = form.save(commit=False)
+            vehicle.driver = driver
+            vehicle.save()
+            messages.success(request, 'Vehicle information saved! Please specify accessibility features.')
+            return redirect('driver_vehicle_accessibility')
+    else:
+        form = VehicleBasicInfoForm()
+    
+    return render(request, 'driver/register_vehicle.html', {'form': form})
+
+
+@login_required
+def driver_vehicle_accessibility(request):
+    """Phase 3: Vehicle accessibility features"""
+    try:
+        driver = request.user.driver
+        vehicle = driver.vehicles.first()
+        if not vehicle:
+            return redirect('driver_register_vehicle')
+    except (Driver.DoesNotExist, Vehicle.DoesNotExist):
+        return redirect('driver_register_basic')
+    
+    if request.method == 'POST':
+        form = VehicleAccessibilityForm(request.POST, instance=vehicle)
+        if form.is_valid():
+            form.save()
+            # Update driver status to training phase
+            driver.application_status = 'training_in_progress'
+            driver.save()
+            
+            messages.success(request, 'Vehicle registration complete! Now you can proceed with training modules.')
+            return redirect('driver_training')
+    else:
+        form = VehicleAccessibilityForm(instance=vehicle)
+    
+    return render(request, 'driver/vehicle_accessibility.html', {'form': form, 'vehicle': vehicle})
+
+
+@login_required
+def driver_vehicle_safety(request):
+    """Phase 3: Vehicle safety equipment checklist"""
+    try:
+        driver = request.user.driver
+        vehicle = driver.vehicles.first()
+        if not vehicle:
+            return redirect('driver_register_vehicle')
+    except (Driver.DoesNotExist, Vehicle.DoesNotExist):
+        return redirect('driver_register_basic')
+    
+    if request.method == 'POST':
+        form = VehicleSafetyEquipmentForm(request.POST)
+        if form.is_valid():
+            vehicle.safety_equipment = form.cleaned_data['safety_equipment']
+            vehicle.save()
+            messages.success(request, 'Safety equipment confirmed! Please upload vehicle documents.')
+            return redirect('driver_vehicle_documents')
+    else:
+        form = VehicleSafetyEquipmentForm(initial={'safety_equipment': vehicle.safety_equipment})
+    
+    return render(request, 'driver/vehicle_safety.html', {'form': form, 'vehicle': vehicle})
+
+
+@login_required
+def driver_vehicle_documents(request):
+    """Phase 3: Vehicle document upload"""
+    try:
+        driver = request.user.driver
+        vehicle = driver.vehicles.first()
+        if not vehicle:
+            return redirect('driver_register_vehicle')
+    except (Driver.DoesNotExist, Vehicle.DoesNotExist):
+        return redirect('driver_register_basic')
+    
+    # Get existing documents
+    existing_docs = {doc.document_type: doc for doc in vehicle.documents.all()}
+    required_docs = ['registration', 'insurance', 'inspection']
+    
+    if request.method == 'POST':
+        doc_type = request.POST.get('document_type')
+        if doc_type and 'file' in request.FILES:
+            # Delete existing document of same type
+            if doc_type in existing_docs:
+                existing_docs[doc_type].delete()
+            
+            # Create new document
+            VehicleDocument.objects.create(
+                vehicle=vehicle,
+                document_type=doc_type,
+                file=request.FILES['file'],
+                expiry_date=request.POST.get('expiry_date') or None
+            )
+            
+            # Check if all required documents are uploaded
+            current_docs = set(vehicle.documents.values_list('document_type', flat=True))
+            if all(doc in current_docs for doc in required_docs):
+                messages.success(request, 'All documents uploaded! Please upload vehicle photos.')
+                return redirect('driver_vehicle_photos')
+            else:
+                messages.success(request, 'Document uploaded successfully!')
+    
+    # Prepare document status
+    doc_status = {}
+    for doc_type, display_name in VehicleDocument.DOCUMENT_TYPES:
+        doc_status[doc_type] = {
+            'name': display_name,
+            'uploaded': doc_type in existing_docs,
+            'required': doc_type in required_docs
+        }
+    
+    return render(request, 'driver/vehicle_documents.html', {
+        'doc_status': doc_status,
+        'vehicle': vehicle,
+        'progress': len(existing_docs) / len(required_docs) * 100
+    })
+
+
+@login_required
+def driver_vehicle_photos(request):
+    """Phase 3: Vehicle photo upload"""
+    try:
+        driver = request.user.driver
+        vehicle = driver.vehicles.first()
+        if not vehicle:
+            return redirect('driver_register_vehicle')
+    except (Driver.DoesNotExist, Vehicle.DoesNotExist):
+        return redirect('driver_register_basic')
+    
+    # Get existing photos
+    existing_photos = {photo.photo_type: photo for photo in vehicle.photos.all()}
+    required_photos = ['exterior_front', 'exterior_back', 'accessibility_ramp', 'wheelchair_area']
+    
+    if request.method == 'POST':
+        photo_type = request.POST.get('photo_type')
+        if photo_type and 'image' in request.FILES:
+            # Delete existing photo of same type
+            if photo_type in existing_photos:
+                existing_photos[photo_type].delete()
+            
+            # Create new photo
+            VehiclePhoto.objects.create(
+                vehicle=vehicle,
+                photo_type=photo_type,
+                image=request.FILES['image'],
+                description=request.POST.get('description', '')
+            )
+            
+            # Check if all required photos are uploaded
+            current_photos = set(vehicle.photos.values_list('photo_type', flat=True))
+            if all(photo in current_photos for photo in required_photos):
+                driver.application_status = 'training_in_progress'
+                driver.save()
+                messages.success(request, 'All photos uploaded! Ready for training modules.')
+                return redirect('driver_training')
+            else:
+                messages.success(request, 'Photo uploaded successfully!')
+    
+    # Prepare photo status
+    photo_status = {}
+    for photo_type, display_name in VehiclePhoto.PHOTO_TYPES:
+        photo_status[photo_type] = {
+            'name': display_name,
+            'uploaded': photo_type in existing_photos,
+            'required': photo_type in required_photos
+        }
+    
+    return render(request, 'driver/vehicle_photos.html', {
+        'photo_status': photo_status,
+        'vehicle': vehicle,
+        'progress': len(existing_photos) / len(required_photos) * 100
+    })
+
+
+@login_required
+def driver_training(request):
+    """Phase 4: Training modules"""
+    try:
+        driver = request.user.driver
+        if driver.application_status != 'training_in_progress':
+            return redirect('driver_dashboard')
+    except Driver.DoesNotExist:
+        return redirect('driver_register_basic')
+    
+    # Get all training modules with progress
+    modules = TrainingModule.objects.all().order_by('order')
+    
+    # Annotate modules with progress information
+    for module in modules:
+        try:
+            training = DriverTraining.objects.get(driver=driver, module=module)
+            module.training_progress = training
+        except DriverTraining.DoesNotExist:
+            module.training_progress = None
+    
+    # Check if all mandatory modules are completed
+    mandatory_modules = [module for module in modules if module.is_mandatory]
+    completed_mandatory = sum(1 for module in mandatory_modules 
+                            if module.training_progress and module.training_progress.is_completed)
+    
+    if completed_mandatory == len(mandatory_modules):
+        driver.training_completed = True
+        driver.application_status = 'assessment_scheduled'
+        driver.save()
+    
+    # Calculate remaining modules
+    remaining_mandatory = len(mandatory_modules) - completed_mandatory
+    
+    return render(request, 'driver/training.html', {
+        'modules': modules,
+        'completed_mandatory': completed_mandatory,
+        'total_mandatory': len(mandatory_modules),
+        'remaining_mandatory': remaining_mandatory
+    })
+
+
+@login_required
+def driver_training_module(request, module_id):
+    """Individual training module"""
+    try:
+        driver = request.user.driver
+        module = get_object_or_404(TrainingModule, id=module_id)
+    except Driver.DoesNotExist:
+        return redirect('driver_register_basic')
+    
+    # Get or create training progress
+    training, created = DriverTraining.objects.get_or_create(
+        driver=driver,
+        module=module,
+        defaults={'attempts': 0}
+    )
+    
+    if request.method == 'POST':
+        # Handle quiz submission
+        score = int(request.POST.get('score', 0))
+        training.quiz_score = score
+        training.attempts += 1
+        
+        if score >= 80:  # Passing score
+            training.completed_at = timezone.now()
+            messages.success(request, f'Congratulations! You passed {module.title}.')
+        else:
+            messages.warning(request, f'Score: {score}/100. You need 80% to pass. Please try again.')
+        
+        training.save()
+        return redirect('driver_training')
+    
+    return render(request, 'driver/training_module.html', {
+        'module': module,
+        'training': training
+    })
+
+
+@login_required
+def driver_dashboard(request):
+    """Driver dashboard"""
+    try:
+        driver = request.user.driver
+    except Driver.DoesNotExist:
+        return redirect('driver_register_basic')
+    
+    # Calculate progress
+    progress_steps = {
+        'started': 10,
+        'documents_uploaded': 40, 
+        'background_check_pending': 60,
+        'training_in_progress': 80,
+        'assessment_scheduled': 90,
+        'approved': 100
+    }
+    
+    progress = progress_steps.get(driver.application_status, 0)
+    
+    # Get next step
+    next_steps = {
+        'started': 'Upload required documents',
+        'documents_uploaded': 'Provide background check consent',
+        'background_check_pending': 'Waiting for background check approval' if driver.background_check_status != 'approved' else 'Register your vehicle',
+        'training_in_progress': 'Complete training modules',
+        'assessment_scheduled': 'Schedule practical assessment',
+        'approved': 'Start accepting rides!'
+    }
+    
+    next_step = next_steps.get(driver.application_status, 'Application under review')
+    
+    # Initialize analytics variables
+    recent_rides = []
+    today_stats = None
+    week_stats = None
+    month_stats = None
+    current_session = None
+    
+    # If driver is approved, get ride history and analytics
+    if driver.application_status == 'approved':
+        # Get recent rides
+        recent_rides = driver.driver_rides.select_related('ride', 'vehicle').order_by('-created_at')[:10]
+        
+        # Get today's stats
+        today = timezone.now().date()
+        today_rides = driver.driver_rides.filter(
+            created_at__date=today,
+            ride__status='completed'
+        )
+        
+        today_stats = {
+            'rides': today_rides.count(),
+            'earnings': sum(ride.driver_earnings for ride in today_rides),
+            'distance': sum(ride.distance_km or 0 for ride in today_rides),
+            'online_hours': 0  # Will be calculated from sessions
+        }
+        
+        # Get this week's performance
+        try:
+            week_start = today - timedelta(days=today.weekday())
+            week_stats = driver.performance_metrics.filter(
+                period_type='weekly',
+                period_start=week_start
+            ).first()
+        except:
+            week_stats = None
+        
+        # Get this month's performance
+        try:
+            month_start = today.replace(day=1)
+            month_stats = driver.performance_metrics.filter(
+                period_type='monthly',
+                period_start=month_start
+            ).first()
+        except:
+            month_stats = None
+        
+        # Get current session if online
+        if driver.is_available:
+            current_session = driver.sessions.filter(ended_at__isnull=True).first()
+    
+    context = {
+        'driver': driver,
+        'progress': progress,
+        'next_step': next_step,
+        'vehicle': driver.vehicles.first() if driver.vehicles.exists() else None,
+        'recent_rides': recent_rides,
+        'today_stats': today_stats,
+        'week_stats': week_stats,
+        'month_stats': month_stats,
+        'current_session': current_session
+    }
+    
+    return render(request, 'driver/dashboard.html', context)
+
+
+# AJAX endpoints for file uploads
+@login_required
+@require_http_methods(["POST"])
+def ajax_upload_document(request):
+    """AJAX endpoint for document upload"""
+    try:
+        driver = request.user.driver
+        doc_type = request.POST.get('document_type')
+        
+        if 'file' not in request.FILES:
+            return JsonResponse({'success': False, 'error': 'No file provided'})
+        
+        # Delete existing document of same type
+        DriverDocument.objects.filter(driver=driver, document_type=doc_type).delete()
+        
+        # Create new document
+        doc = DriverDocument.objects.create(
+            driver=driver,
+            document_type=doc_type,
+            file=request.FILES['file']
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Document uploaded successfully',
+            'doc_id': doc.id
+        })
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@login_required
+@require_http_methods(["POST"])  
+def ajax_upload_vehicle_photo(request):
+    """AJAX endpoint for vehicle photo upload"""
+    try:
+        driver = request.user.driver
+        vehicle = driver.vehicles.first()
+        
+        if not vehicle:
+            return JsonResponse({'success': False, 'error': 'No vehicle found'})
+        
+        photo_type = request.POST.get('photo_type')
+        
+        if 'image' not in request.FILES:
+            return JsonResponse({'success': False, 'error': 'No image provided'})
+        
+        # Delete existing photo of same type
+        VehiclePhoto.objects.filter(vehicle=vehicle, photo_type=photo_type).delete()
+        
+        # Create new photo
+        photo = VehiclePhoto.objects.create(
+            vehicle=vehicle,
+            photo_type=photo_type,
+            image=request.FILES['image'],
+            description=request.POST.get('description', '')
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Photo uploaded successfully',
+            'photo_id': photo.id
+        })
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@login_required
+def driver_documents(request):
+    """View and manage driver documents"""
+    try:
+        driver = request.user.driver
+    except Driver.DoesNotExist:
+        return redirect('driver_register_basic')
+    
+    # Get all document types and existing documents
+    document_types = dict(DriverDocument.DOCUMENT_TYPES)
+    existing_docs = {doc.document_type: doc for doc in driver.documents.all()}
+    
+    # Prepare document list with status
+    documents = []
+    for doc_type, display_name in DriverDocument.DOCUMENT_TYPES:
+        doc_info = {
+            'type': doc_type,
+            'name': display_name,
+            'required': doc_type in ['driving_license_front', 'driving_license_back', 'citizen_card', 'proof_of_address'],
+            'exists': doc_type in existing_docs,
+            'document': existing_docs.get(doc_type),
+            'can_update': driver.application_status in ['approved', 'documents_uploaded', 'background_check_pending', 'training_in_progress', 'assessment_scheduled']
+        }
+        documents.append(doc_info)
+    
+    if request.method == 'POST':
+        doc_type = request.POST.get('document_type')
+        
+        if doc_type and 'file' in request.FILES:
+            # Check if driver can update documents
+            can_update = driver.application_status in ['approved', 'documents_uploaded', 'background_check_pending', 'training_in_progress', 'assessment_scheduled']
+            if not can_update:
+                messages.error(request, 'You cannot update documents at this stage.')
+                return redirect('driver_documents')
+            
+            # Delete existing document of same type
+            if doc_type in existing_docs:
+                existing_docs[doc_type].delete()
+            
+            # Create new document
+            DriverDocument.objects.create(
+                driver=driver,
+                document_type=doc_type,
+                file=request.FILES['file']
+            )
+            
+            messages.success(request, f'{document_types[doc_type]} updated successfully!')
+            return redirect('driver_documents')
+    
+    context = {
+        'driver': driver,
+        'documents': documents
+    }
+    
+    return render(request, 'driver/documents.html', context)

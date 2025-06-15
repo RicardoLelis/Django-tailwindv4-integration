@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+
+{% block title %}Become a RideConnect Driver{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-purple-50 to-white">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'landing_page' %}" class="flex items-center text-gray-700 hover:text-purple-600 transition-colors">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Back to Home
+                </a>
+                <div class="text-sm text-gray-600">
+                    Already a driver? <a href="{% url 'login' %}" class="text-purple-600 hover:text-purple-700 font-medium">Sign In</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hero Section -->
+    <div class="container mx-auto px-4 py-16">
+        <div class="text-center max-w-4xl mx-auto">
+            <h1 class="text-5xl font-bold text-gray-900 mb-6">
+                Become a RideConnect Driver
+            </h1>
+            <p class="text-xl text-gray-600 mb-8">
+                Join Portugal's first accessible ride platform and make a real difference in your community
+            </p>
+            
+            <!-- Benefits Grid -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <div class="text-3xl font-bold text-purple-600 mb-2">€22-24</div>
+                    <div class="text-gray-600">per trip average</div>
+                    <div class="text-sm text-gray-500 mt-1">2x standard platforms</div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <div class="text-3xl font-bold text-green-600 mb-2">€500</div>
+                    <div class="text-gray-600">signing bonus</div>
+                    <div class="text-sm text-gray-500 mt-1">after 50 rides + 750km</div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <div class="text-3xl font-bold text-blue-600 mb-2">€2,000</div>
+                    <div class="text-gray-600">monthly guarantee</div>
+                    <div class="text-sm text-gray-500 mt-1">first 3 months</div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <div class="text-3xl font-bold text-orange-600 mb-2">24/7</div>
+                    <div class="text-gray-600">support</div>
+                    <div class="text-sm text-gray-500 mt-1">dedicated driver line</div>
+                </div>
+            </div>
+            
+            <!-- Key Benefits -->
+            <div class="grid md:grid-cols-2 gap-8 mb-12 text-left">
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Why Choose RideConnect?</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            Higher earnings than standard platforms
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            Meaningful partnership helping disabled community
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            Flexible schedule, operate when you want
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            Professional training provided free
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            No monthly fees, just commission when earning
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Requirements</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-blue-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            Valid Portuguese driving license
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-blue-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            Wheelchair-accessible vehicle
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-blue-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            Legal authorization to provide services in Portugal
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-blue-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            Clean driving record
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-blue-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            Complete accessibility training
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- CTA Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <a href="{% url 'driver_initial_registration' %}" 
+                   class="inline-flex items-center justify-center w-full sm:w-auto bg-purple-600 text-white font-semibold py-4 px-8 rounded-xl hover:bg-purple-700 transition-colors text-center">
+                    Get Started
+                </a>
+                <a href="#learn-more" 
+                   class="inline-flex items-center justify-center w-full sm:w-auto border-2 border-purple-600 text-purple-600 font-semibold py-4 px-8 rounded-xl hover:bg-purple-50 transition-colors text-center">
+                    Learn More
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- How It Works Section -->
+    <div class="bg-gray-50 py-16" id="learn-more">
+        <div class="container mx-auto px-4">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-6">How It Works</h2>
+                <p class="text-xl text-gray-600">Quick 2-step registration process to get started</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto">
+                <!-- Step 1 -->
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-purple-600 text-white rounded-full flex items-center justify-center text-xl font-bold mr-4">1</div>
+                        <h3 class="text-xl font-semibold">Quick Registration</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">Start with just your email, phone number, and fleet size. Takes less than 2 minutes!</p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            Enter basic contact info
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            Verify your email
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            Receive registration link
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Step 2 -->
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-green-600 text-white rounded-full flex items-center justify-center text-xl font-bold mr-4">2</div>
+                        <h3 class="text-xl font-semibold">Complete Registration</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">After email verification, complete your profile at your own pace.</p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            Add vehicle information & photos
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            Upload licenses & documents
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            Complete training & start earning
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Final CTA -->
+            <div class="text-center mt-16">
+                <a href="{% url 'driver_initial_registration' %}" 
+                   class="inline-flex items-center justify-center bg-purple-600 text-white font-semibold py-4 px-12 rounded-xl hover:bg-purple-700 transition-colors text-lg">
+                    Get Started Now
+                </a>
+                <p class="text-gray-600 mt-4">Join 500+ drivers already earning with RideConnect</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

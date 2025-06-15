@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block title %}Background Check Consent - RideConnect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Progress Bar -->
+        <div class="max-w-4xl mx-auto mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h1 class="text-2xl font-bold text-gray-900">Background Check Consent</h1>
+                <span class="text-sm text-gray-500">Final Step</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-purple-600 h-2 rounded-full" style="width: 95%"></div>
+            </div>
+        </div>
+
+        <div class="max-w-3xl mx-auto">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-2">Background Check Authorization</h2>
+                <p class="text-gray-600 mb-8">As a final step in ensuring the safety of our passengers, we require your consent to conduct background checks. This is standard practice for all professional drivers.</p>
+
+                <!-- Error Messages -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="mb-6 p-4 rounded-lg {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-green-50 text-green-800 border border-green-200{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <!-- Information Section -->
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8">
+                    <h3 class="text-lg font-semibold text-blue-900 mb-3">🔒 What We Check</h3>
+                    <ul class="text-blue-800 text-sm space-y-2">
+                        <li><strong>Criminal Record:</strong> We verify you have no serious criminal convictions in the last 5 years</li>
+                        <li><strong>Driving Record:</strong> We check for major traffic violations, accidents, and license suspensions</li>
+                        <li><strong>Identity Verification:</strong> We confirm your identity matches your documents</li>
+                        <li><strong>Service Authorization:</strong> We verify your legal right to provide services in Portugal</li>
+                    </ul>
+                </div>
+
+                <!-- Privacy Notice -->
+                <div class="bg-green-50 border border-green-200 rounded-xl p-6 mb-8">
+                    <h3 class="text-lg font-semibold text-green-900 mb-3">🛡️ Your Privacy is Protected</h3>
+                    <ul class="text-green-800 text-sm space-y-2">
+                        <li>• Background checks are conducted by certified third-party agencies</li>
+                        <li>• Your information is encrypted and securely stored</li>
+                        <li>• We only check what's necessary for passenger safety</li>
+                        <li>• You can request a copy of your background check report</li>
+                        <li>• Information is never shared with unauthorized parties</li>
+                    </ul>
+                </div>
+
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Consent Checkboxes -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">Required Authorizations</h3>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                {{ form.consent_criminal_record }}
+                                <label for="{{ form.consent_criminal_record.id_for_label }}" class="ml-3 text-sm text-gray-700">
+                                    <span class="font-medium">Criminal Record Check</span><br>
+                                    {{ form.consent_criminal_record.label }}
+                                </label>
+                            </div>
+                            {% if form.consent_criminal_record.errors %}
+                                <div class="text-red-600 text-sm ml-8">{{ form.consent_criminal_record.errors }}</div>
+                            {% endif %}
+                            
+                            <div class="flex items-start">
+                                {{ form.consent_driving_record }}
+                                <label for="{{ form.consent_driving_record.id_for_label }}" class="ml-3 text-sm text-gray-700">
+                                    <span class="font-medium">Driving Record Check</span><br>
+                                    {{ form.consent_driving_record.label }}
+                                </label>
+                            </div>
+                            {% if form.consent_driving_record.errors %}
+                                <div class="text-red-600 text-sm ml-8">{{ form.consent_driving_record.errors }}</div>
+                            {% endif %}
+                            
+                            <div class="flex items-start">
+                                {{ form.consent_identity_verification }}
+                                <label for="{{ form.consent_identity_verification.id_for_label }}" class="ml-3 text-sm text-gray-700">
+                                    <span class="font-medium">Identity Verification</span><br>
+                                    {{ form.consent_identity_verification.label }}
+                                </label>
+                            </div>
+                            {% if form.consent_identity_verification.errors %}
+                                <div class="text-red-600 text-sm ml-8">{{ form.consent_identity_verification.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Digital Signature -->
+                    <div class="space-y-2">
+                        <label for="{{ form.digital_signature.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Digital Signature *
+                        </label>
+                        {{ form.digital_signature }}
+                        <p class="text-sm text-gray-500">Type your full legal name exactly as it appears on your ID document</p>
+                        {% if form.digital_signature.errors %}
+                            <div class="text-red-600 text-sm">{{ form.digital_signature.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Legal Notice -->
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-6">
+                        <h4 class="font-medium text-gray-900 mb-2">Legal Notice</h4>
+                        <p class="text-sm text-gray-600 leading-relaxed">
+                            By providing your digital signature above, you authorize RideConnect and its designated agents to conduct the background checks described above. This authorization is valid for the duration of your application and partnership. You understand that any false information or refusal to authorize these checks may result in the rejection of your application. You have the right to receive a copy of any background check report and to dispute any inaccurate information.
+                        </p>
+                    </div>
+
+                    <!-- Form Errors -->
+                    {% if form.non_field_errors %}
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <h4 class="text-red-800 font-medium mb-2">Please correct the following errors:</h4>
+                            {% for error in form.non_field_errors %}
+                                <p class="text-red-600 text-sm">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Navigation Buttons -->
+                    <div class="flex justify-between pt-6 border-t">
+                        <a href="{% url 'driver_upload_documents' %}" class="bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-xl hover:bg-gray-400 transition-colors">
+                            Back to Documents
+                        </a>
+                        <button type="submit" class="bg-green-600 text-white font-semibold py-3 px-8 rounded-xl hover:bg-green-700 transition-colors">
+                            Authorize Background Check
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Timeline Section -->
+            <div class="mt-8 bg-purple-50 border border-purple-200 rounded-xl p-6">
+                <h3 class="text-lg font-semibold text-purple-900 mb-3">⏱️ What Happens Next</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-medium">1</div>
+                        <div class="ml-4">
+                            <p class="font-medium text-purple-900">Background Check Processing</p>
+                            <p class="text-sm text-purple-700">Usually completed within 2-3 business days</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-medium">2</div>
+                        <div class="ml-4">
+                            <p class="font-medium text-purple-900">Vehicle Registration</p>
+                            <p class="text-sm text-purple-700">Add your vehicle details and accessibility features</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-medium">3</div>
+                        <div class="ml-4">
+                            <p class="font-medium text-purple-900">Training & Assessment</p>
+                            <p class="text-sm text-purple-700">Complete accessibility training modules</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-medium">4</div>
+                        <div class="ml-4">
+                            <p class="font-medium text-purple-900">Start Driving!</p>
+                            <p class="text-sm text-purple-700">Begin accepting ride requests and earning money</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Ensure all checkboxes are checked before enabling submit
+    const form = document.querySelector('form');
+    const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+    const submitButton = form.querySelector('button[type="submit"]');
+    const signatureField = form.querySelector('input[name="digital_signature"]');
+    
+    function validateForm() {
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        const hasSignature = signatureField.value.trim().length > 0;
+        
+        if (allChecked && hasSignature) {
+            submitButton.disabled = false;
+            submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+            submitButton.disabled = true;
+            submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    }
+    
+    // Initial validation
+    validateForm();
+    
+    // Add event listeners
+    checkboxes.forEach(cb => cb.addEventListener('change', validateForm));
+    signatureField.addEventListener('input', validateForm);
+});
+</script>
+{% endblock %}
