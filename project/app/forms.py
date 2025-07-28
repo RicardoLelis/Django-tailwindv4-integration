@@ -2,7 +2,12 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from .models import Rider, Driver, Vehicle, DriverDocument, VehicleDocument, VehiclePhoto
+from django.utils import timezone
+from datetime import datetime, timedelta
+from .models import (
+    Rider, Driver, Vehicle, DriverDocument, VehicleDocument, VehiclePhoto,
+    PreBookedRide, RecurringRideTemplate, DriverCalendar, RideMatchOffer
+)
 import re
 
 
@@ -636,3 +641,545 @@ class VehiclePhotoUploadForm(forms.ModelForm):
                 'placeholder': 'Optional description'
             })
         }
+
+
+class PreBookedRideForm(forms.ModelForm):
+    """Form for creating pre-booked rides"""
+    pickup_location = forms.CharField(
+        max_length=255,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'placeholder': 'Enter pickup location'
+        })
+    )
+    
+    dropoff_location = forms.CharField(
+        max_length=255,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'placeholder': 'Enter dropoff location'
+        })
+    )
+    
+    scheduled_pickup_date = forms.DateField(
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'min': (timezone.now() + timedelta(hours=2)).date().isoformat()
+        })
+    )
+    
+    scheduled_pickup_time = forms.TimeField(
+        widget=forms.TimeInput(attrs={
+            'type': 'time',
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all'
+        })
+    )
+    
+    estimated_duration_minutes = forms.IntegerField(
+        min_value=5,
+        max_value=300,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'placeholder': '30',
+            'min': '5',
+            'max': '300'
+        })
+    )
+    
+    pickup_window_minutes = forms.IntegerField(
+        min_value=5,
+        max_value=60,
+        initial=15,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'placeholder': '15',
+            'min': '5',
+            'max': '60'
+        })
+    )
+    
+    is_flexible = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'w-5 h-5 text-purple-600 rounded focus:ring-purple-500'
+        }),
+        label="I'm flexible with pickup time for better availability"
+    )
+    
+    special_requirements = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'placeholder': 'Any special requirements or instructions for the driver',
+            'rows': 3
+        })
+    )
+    
+    priority = forms.ChoiceField(
+        choices=[
+            ('low', 'Low'),
+            ('normal', 'Normal'),
+            ('high', 'High'),
+            ('urgent', 'Urgent'),
+        ],
+        initial='normal',
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all'
+        })
+    )
+    
+    class Meta:
+        model = PreBookedRide
+        fields = ['pickup_location', 'dropoff_location', 'estimated_duration_minutes',
+                 'pickup_window_minutes', 'is_flexible', 'special_requirements', 'priority']
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Import here to avoid circular imports
+        from .models import PreBookedRide
+        self.model = PreBookedRide
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        # Combine date and time fields
+        scheduled_date = cleaned_data.get('scheduled_pickup_date')
+        scheduled_time = cleaned_data.get('scheduled_pickup_time')
+        
+        if scheduled_date and scheduled_time:
+            # Create timezone-aware datetime
+            scheduled_datetime = timezone.make_aware(
+                datetime.combine(scheduled_date, scheduled_time)
+            )
+            
+            # Validate minimum advance booking time (2 hours)
+            min_booking_time = timezone.now() + timedelta(hours=2)
+            if scheduled_datetime < min_booking_time:
+                raise ValidationError("Pre-booked rides must be scheduled at least 2 hours in advance.")
+            
+            # Validate maximum advance booking time (30 days)
+            max_booking_time = timezone.now() + timedelta(days=30)
+            if scheduled_datetime > max_booking_time:
+                raise ValidationError("Pre-booked rides cannot be scheduled more than 30 days in advance.")
+            
+            cleaned_data['scheduled_pickup_time'] = scheduled_datetime
+        
+        # Validate pickup and dropoff locations are different
+        pickup = cleaned_data.get('pickup_location')
+        dropoff = cleaned_data.get('dropoff_location')
+        if pickup and dropoff and pickup.lower().strip() == dropoff.lower().strip():
+            raise ValidationError("Pickup and dropoff locations must be different.")
+        
+        return cleaned_data
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # The scheduled_pickup_time has already been set in clean()
+        if commit:
+            instance.save()
+        return instance
+
+
+class RecurringRideForm(forms.ModelForm):
+    """Form for setting up recurring rides"""
+    template_name = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'placeholder': 'e.g., Daily work commute, Weekly therapy session'
+        })
+    )
+    
+    pickup_location = forms.CharField(
+        max_length=255,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'placeholder': 'Enter pickup location'
+        })
+    )
+    
+    dropoff_location = forms.CharField(
+        max_length=255,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'placeholder': 'Enter dropoff location'
+        })
+    )
+    
+    pickup_time = forms.TimeField(
+        widget=forms.TimeInput(attrs={
+            'type': 'time',
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all'
+        })
+    )
+    
+    estimated_duration_minutes = forms.IntegerField(
+        min_value=5,
+        max_value=300,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'placeholder': '30',
+            'min': '5',
+            'max': '300'
+        })
+    )
+    
+    recurrence_pattern = forms.ChoiceField(
+        choices=[
+            ('daily', 'Daily'),
+            ('weekdays', 'Weekdays Only'),
+            ('weekly', 'Weekly'),
+            ('biweekly', 'Bi-weekly'),
+            ('monthly', 'Monthly'),
+            ('custom', 'Custom Pattern'),
+        ],
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'id': 'recurrence-pattern'
+        })
+    )
+    
+    custom_days = forms.MultipleChoiceField(
+        choices=[
+            (0, 'Monday'),
+            (1, 'Tuesday'),
+            (2, 'Wednesday'),
+            (3, 'Thursday'),
+            (4, 'Friday'),
+            (5, 'Saturday'),
+            (6, 'Sunday'),
+        ],
+        required=False,
+        widget=forms.CheckboxSelectMultiple(attrs={
+            'class': 'text-purple-600'
+        }),
+        label="Select days for custom pattern"
+    )
+    
+    start_date = forms.DateField(
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'min': timezone.now().date().isoformat()
+        })
+    )
+    
+    end_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'min': (timezone.now() + timedelta(days=1)).date().isoformat()
+        })
+    )
+    
+    pickup_window_minutes = forms.IntegerField(
+        min_value=5,
+        max_value=60,
+        initial=15,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'placeholder': '15',
+            'min': '5',
+            'max': '60'
+        })
+    )
+    
+    special_requirements = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'placeholder': 'Any special requirements or instructions for all rides',
+            'rows': 3
+        })
+    )
+    
+    priority = forms.ChoiceField(
+        choices=[
+            ('low', 'Low'),
+            ('normal', 'Normal'),
+            ('high', 'High'),
+            ('urgent', 'Urgent'),
+        ],
+        initial='normal',
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all'
+        })
+    )
+    
+    generation_horizon_days = forms.IntegerField(
+        min_value=7,
+        max_value=90,
+        initial=30,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'min': '7',
+            'max': '90'
+        }),
+        label="Generate rides how many days in advance?"
+    )
+    
+    class Meta:
+        model = RecurringRideTemplate
+        fields = ['template_name', 'pickup_location', 'dropoff_location', 'pickup_time',
+                 'estimated_duration_minutes', 'recurrence_pattern', 'custom_days',
+                 'start_date', 'end_date', 'pickup_window_minutes', 'special_requirements',
+                 'priority', 'generation_horizon_days']
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Import here to avoid circular imports
+        from .models import RecurringRideTemplate
+        self.model = RecurringRideTemplate
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        # Validate custom days for custom pattern
+        pattern = cleaned_data.get('recurrence_pattern')
+        custom_days = cleaned_data.get('custom_days')
+        
+        if pattern == 'custom' and not custom_days:
+            raise ValidationError({'custom_days': 'Please select at least one day for custom pattern.'})
+        
+        # Convert custom_days to integers
+        if custom_days:
+            cleaned_data['custom_days'] = [int(day) for day in custom_days]
+        
+        # Validate date range
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+        
+        if end_date and start_date and end_date <= start_date:
+            raise ValidationError({'end_date': 'End date must be after start date.'})
+        
+        # Validate that start date is not in the past
+        if start_date and start_date < timezone.now().date():
+            raise ValidationError({'start_date': 'Start date cannot be in the past.'})
+        
+        # Validate pickup and dropoff locations are different
+        pickup = cleaned_data.get('pickup_location')
+        dropoff = cleaned_data.get('dropoff_location')
+        if pickup and dropoff and pickup.lower().strip() == dropoff.lower().strip():
+            raise ValidationError("Pickup and dropoff locations must be different.")
+        
+        return cleaned_data
+
+
+class DriverCalendarForm(forms.ModelForm):
+    """Form for drivers to set their availability"""
+    date = forms.DateField(
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'min': timezone.now().date().isoformat()
+        })
+    )
+    
+    start_time = forms.TimeField(
+        widget=forms.TimeInput(attrs={
+            'type': 'time',
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all'
+        })
+    )
+    
+    end_time = forms.TimeField(
+        widget=forms.TimeInput(attrs={
+            'type': 'time',
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all'
+        })
+    )
+    
+    status = forms.ChoiceField(
+        choices=[
+            ('available', 'Available'),
+            ('busy', 'Busy'),
+            ('break', 'On Break'),
+            ('offline', 'Offline'),
+        ],
+        initial='available',
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all'
+        })
+    )
+    
+    max_rides = forms.IntegerField(
+        min_value=1,
+        max_value=20,
+        initial=10,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'min': '1',
+            'max': '20'
+        }),
+        label="Maximum number of pre-booked rides"
+    )
+    
+    break_start = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={
+            'type': 'time',
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all'
+        }),
+        label="Break start time (optional)"
+    )
+    
+    break_duration_minutes = forms.IntegerField(
+        min_value=15,
+        max_value=120,
+        initial=30,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'min': '15',
+            'max': '120'
+        }),
+        label="Break duration in minutes"
+    )
+    
+    accepts_wheelchair = forms.BooleanField(
+        required=False,
+        initial=True,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'w-5 h-5 text-purple-600 rounded focus:ring-purple-500'
+        }),
+        label="Accept wheelchair users"
+    )
+    
+    accepts_long_distance = forms.BooleanField(
+        required=False,
+        initial=True,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'w-5 h-5 text-purple-600 rounded focus:ring-purple-500'
+        }),
+        label="Accept long distance rides"
+    )
+    
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'placeholder': 'Any notes or preferences for this day',
+            'rows': 2
+        })
+    )
+    
+    class Meta:
+        model = DriverCalendar
+        fields = ['date', 'start_time', 'end_time', 'status', 'max_rides',
+                 'break_start', 'break_duration_minutes', 'accepts_wheelchair',
+                 'accepts_long_distance', 'notes']
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Import here to avoid circular imports
+        from .models import DriverCalendar
+        self.model = DriverCalendar
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        # Validate end time is after start time
+        start_time = cleaned_data.get('start_time')
+        end_time = cleaned_data.get('end_time')
+        
+        if start_time and end_time and start_time >= end_time:
+            raise ValidationError({'end_time': 'End time must be after start time.'})
+        
+        # Validate break is within working hours
+        break_start = cleaned_data.get('break_start')
+        
+        if break_start:
+            if start_time and break_start < start_time:
+                raise ValidationError({'break_start': 'Break cannot start before working hours.'})
+            if end_time and break_start >= end_time:
+                raise ValidationError({'break_start': 'Break cannot start after working hours end.'})
+        
+        # Validate date is not in the past
+        date = cleaned_data.get('date')
+        if date and date < timezone.now().date():
+            raise ValidationError({'date': 'Cannot set availability for past dates.'})
+        
+        return cleaned_data
+
+
+class RideOfferResponseForm(forms.Form):
+    """Form for drivers to respond to ride offers"""
+    RESPONSE_CHOICES = [
+        ('accept', 'Accept'),
+        ('decline', 'Decline'),
+    ]
+    
+    DECLINE_REASON_CHOICES = [
+        ('', '--- Select a reason ---'),
+        ('distance', 'Too Far'),
+        ('timing', 'Bad Timing'),
+        ('vehicle', 'Vehicle Unavailable'),
+        ('personal', 'Personal Reason'),
+        ('other', 'Other'),
+    ]
+    
+    response = forms.ChoiceField(
+        choices=RESPONSE_CHOICES,
+        widget=forms.RadioSelect(attrs={
+            'class': 'text-purple-600 focus:ring-purple-500'
+        })
+    )
+    
+    decline_reason = forms.ChoiceField(
+        choices=DECLINE_REASON_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all'
+        }),
+        label="Reason for declining (if applicable)"
+    )
+    
+    decline_notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'placeholder': 'Additional notes (optional)',
+            'rows': 2
+        }),
+        label="Additional notes"
+    )
+    
+    def __init__(self, *args, **kwargs):
+        self.ride_offer = kwargs.pop('ride_offer', None)
+        super().__init__(*args, **kwargs)
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        response = cleaned_data.get('response')
+        decline_reason = cleaned_data.get('decline_reason')
+        
+        # If declining, require a reason
+        if response == 'decline' and not decline_reason:
+            raise ValidationError({'decline_reason': 'Please provide a reason for declining.'})
+        
+        # Validate that the offer hasn't expired
+        if self.ride_offer and self.ride_offer.is_expired:
+            raise ValidationError("This ride offer has expired and can no longer be responded to.")
+        
+        # Validate that the offer is still pending
+        if self.ride_offer and self.ride_offer.status != 'pending':
+            raise ValidationError("This ride offer has already been responded to.")
+        
+        return cleaned_data
+    
+    def save(self):
+        """Process the driver's response to the ride offer"""
+        if not self.ride_offer:
+            raise ValueError("No ride offer associated with this form")
+        
+        response = self.cleaned_data['response']
+        
+        if response == 'accept':
+            self.ride_offer.accept()
+        else:
+            decline_reason = self.cleaned_data.get('decline_reason', '')
+            decline_notes = self.cleaned_data.get('decline_notes', '')
+            self.ride_offer.decline(reason=decline_reason, notes=decline_notes)
+        
+        return self.ride_offer

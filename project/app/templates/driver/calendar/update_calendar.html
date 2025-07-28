@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block title %}Update Availability - RideConnect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Update Availability</h1>
+                    <p class="text-gray-600">{{ date|date:"l, F j, Y" }}</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'driver_calendar' %}" class="text-purple-600 hover:text-purple-700">
+                        ← Back to Calendar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-2xl mx-auto">
+            <form method="post" class="bg-white rounded-xl shadow-lg p-6">
+                {% csrf_token %}
+                
+                <!-- Hidden date field -->
+                <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+
+                <!-- Availability Status -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Availability Status
+                    </label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="relative flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50">
+                            <input type="radio" name="status" value="available" {% if form.status.value == 'available' %}checked{% endif %} class="sr-only peer">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="font-medium">Available</span>
+                            </div>
+                            <div class="absolute inset-0 border-2 rounded-lg peer-checked:border-green-600 peer-checked:bg-green-50"></div>
+                        </label>
+                        
+                        <label class="relative flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50">
+                            <input type="radio" name="status" value="busy" {% if form.status.value == 'busy' %}checked{% endif %} class="sr-only peer">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="font-medium">Not Available</span>
+                            </div>
+                            <div class="absolute inset-0 border-2 rounded-lg peer-checked:border-red-600 peer-checked:bg-red-50"></div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Working Hours -->
+                <div class="mb-6 grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="start_time" class="block text-sm font-medium text-gray-700 mb-2">
+                            Start Time
+                        </label>
+                        <input type="time" 
+                               name="start_time" 
+                               id="start_time"
+                               value="{{ form.start_time.value|default:'07:00' }}"
+                               class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500">
+                    </div>
+                    <div>
+                        <label for="end_time" class="block text-sm font-medium text-gray-700 mb-2">
+                            End Time
+                        </label>
+                        <input type="time" 
+                               name="end_time" 
+                               id="end_time"
+                               value="{{ form.end_time.value|default:'22:00' }}"
+                               class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500">
+                    </div>
+                </div>
+
+                <!-- Break Time -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-3">Break Time (Optional)</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="break_start" class="block text-sm font-medium text-gray-700 mb-2">
+                                Break Start
+                            </label>
+                            <input type="time" 
+                                   name="break_start" 
+                                   id="break_start"
+                                   value="{{ form.break_start.value }}"
+                                   class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500">
+                        </div>
+                        <div>
+                            <label for="break_duration" class="block text-sm font-medium text-gray-700 mb-2">
+                                Duration (minutes)
+                            </label>
+                            <select name="break_duration" 
+                                    id="break_duration"
+                                    class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500">
+                                <option value="">No break</option>
+                                <option value="30" {% if form.break_duration.value == 30 %}selected{% endif %}>30 minutes</option>
+                                <option value="45" {% if form.break_duration.value == 45 %}selected{% endif %}>45 minutes</option>
+                                <option value="60" {% if form.break_duration.value == 60 %}selected{% endif %}>1 hour</option>
+                                <option value="90" {% if form.break_duration.value == 90 %}selected{% endif %}>1.5 hours</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ride Preferences -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-3">Ride Preferences</h3>
+                    
+                    <div class="mb-4">
+                        <label for="max_bookings" class="block text-sm font-medium text-gray-700 mb-2">
+                            Maximum Bookings
+                        </label>
+                        <input type="number" 
+                               name="max_bookings" 
+                               id="max_bookings"
+                               value="{{ form.max_bookings.value|default:10 }}"
+                               min="1"
+                               max="20"
+                               class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500">
+                        <p class="mt-1 text-sm text-gray-500">
+                            Maximum number of pre-booked rides for this day
+                        </p>
+                    </div>
+
+                    <div class="space-y-3">
+                        <label class="flex items-center">
+                            <input type="checkbox" 
+                                   name="accepts_wheelchair" 
+                                   {% if form.accepts_wheelchair.value %}checked{% endif %}
+                                   class="rounded border-gray-300 text-purple-600 shadow-sm focus:border-purple-500 focus:ring-purple-500">
+                            <span class="ml-2 text-sm text-gray-700">Accept wheelchair accessible rides</span>
+                        </label>
+                        
+                        <label class="flex items-center">
+                            <input type="checkbox" 
+                                   name="accepts_long_distance" 
+                                   {% if form.accepts_long_distance.value %}checked{% endif %}
+                                   class="rounded border-gray-300 text-purple-600 shadow-sm focus:border-purple-500 focus:ring-purple-500">
+                            <span class="ml-2 text-sm text-gray-700">Accept long distance rides (>50km)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Current Bookings -->
+                {% if calendar_entry and calendar_entry.current_bookings > 0 %}
+                <div class="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <h4 class="font-medium text-yellow-900 mb-2">Current Bookings</h4>
+                    <p class="text-yellow-800">
+                        You have {{ calendar_entry.current_bookings }} booking{{ calendar_entry.current_bookings|pluralize }} 
+                        on this date. Changing availability may affect these bookings.
+                    </p>
+                </div>
+                {% endif %}
+
+                <!-- Form Actions -->
+                <div class="flex justify-end space-x-3">
+                    <a href="{% url 'driver_calendar' %}" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-calculate break end time
+document.getElementById('break_start').addEventListener('change', updateBreakEnd);
+document.getElementById('break_duration').addEventListener('change', updateBreakEnd);
+
+function updateBreakEnd() {
+    const breakStart = document.getElementById('break_start').value;
+    const breakDuration = document.getElementById('break_duration').value;
+    
+    if (breakStart && breakDuration) {
+        // Calculate and display break end time (implementation would go here)
+    }
+}
+</script>
+{% endblock %}

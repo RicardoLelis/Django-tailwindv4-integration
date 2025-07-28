@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+
+{% block title %}My Bookings - RideConnect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">My Bookings</h1>
+                    <p class="text-gray-600">Manage your accepted pre-booked rides</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'driver_dashboard' %}" class="text-purple-600 hover:text-purple-700">
+                        ← Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Filter Tabs -->
+        <div class="mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8">
+                    <a href="?time=upcoming" 
+                       class="{% if time_filter == 'upcoming' %}border-purple-500 text-purple-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Upcoming
+                    </a>
+                    <a href="?time=today" 
+                       class="{% if time_filter == 'today' %}border-purple-500 text-purple-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Today
+                    </a>
+                    <a href="?time=past" 
+                       class="{% if time_filter == 'past' %}border-purple-500 text-purple-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Past
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Bookings List -->
+            <div class="lg:col-span-2">
+                {% if bookings %}
+                    <div class="space-y-4">
+                        {% for booking in bookings %}
+                        <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900">
+                                        {{ booking.pickup_location }}
+                                    </h3>
+                                    <p class="text-gray-600 mt-1">
+                                        to {{ booking.dropoff_location }}
+                                    </p>
+                                </div>
+                                <span class="px-3 py-1 rounded-full text-sm font-medium
+                                    {% if booking.status == 'driver_assigned' %}bg-green-100 text-green-800
+                                    {% elif booking.status == 'completed' %}bg-gray-100 text-gray-800
+                                    {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                    {{ booking.get_status_display }}
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <span class="text-sm text-gray-500">Pickup Time</span>
+                                    <p class="font-medium">{{ booking.scheduled_pickup_time|date:"M j, g:i A" }}</p>
+                                </div>
+                                <div>
+                                    <span class="text-sm text-gray-500">Passenger</span>
+                                    <p class="font-medium">{{ booking.rider.user.get_full_name|default:booking.rider.user.username }}</p>
+                                </div>
+                                <div>
+                                    <span class="text-sm text-gray-500">Duration</span>
+                                    <p class="font-medium">{{ booking.estimated_duration_minutes }} min</p>
+                                </div>
+                                <div>
+                                    <span class="text-sm text-gray-500">Fare</span>
+                                    <p class="font-medium text-green-600">€{{ booking.estimated_fare|floatformat:2 }}</p>
+                                </div>
+                            </div>
+
+                            {% if booking.wheelchair_required %}
+                            <div class="mb-3">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M3.5 2.5a.5.5 0 00-1 0v8.793l-.646-.647a.5.5 0 00-.708.708l1.5 1.5a.5.5 0 00.708 0l1.5-1.5a.5.5 0 00-.708-.708L3.5 11.293V2.5z"/>
+                                    </svg>
+                                    Wheelchair Accessible
+                                </span>
+                            </div>
+                            {% endif %}
+
+                            <div class="flex justify-between items-center">
+                                <a href="{% url 'driver_booking_detail' booking_id=booking.id %}" class="text-purple-600 hover:text-purple-700 font-medium">
+                                    View Details →
+                                </a>
+                                
+                                {% if booking.scheduled_pickup_time|timesince:"now" < "1 hour" %}
+                                <a href="https://www.google.com/maps/dir/?api=1&destination={{ booking.pickup_latitude }},{{ booking.pickup_longitude }}" 
+                                   target="_blank"
+                                   class="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                    Navigate
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if bookings.has_other_pages %}
+                    <div class="mt-8 flex justify-center">
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                            {% if bookings.has_previous %}
+                                <a href="?page={{ bookings.previous_page_number }}&time={{ time_filter }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    Previous
+                                </a>
+                            {% endif %}
+                            
+                            {% for num in bookings.paginator.page_range %}
+                                {% if bookings.number == num %}
+                                    <span class="relative inline-flex items-center px-4 py-2 border border-purple-500 bg-purple-50 text-sm font-medium text-purple-600">
+                                        {{ num }}
+                                    </span>
+                                {% else %}
+                                    <a href="?page={{ num }}&time={{ time_filter }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                        {{ num }}
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if bookings.has_next %}
+                                <a href="?page={{ bookings.next_page_number }}&time={{ time_filter }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    Next
+                                </a>
+                            {% endif %}
+                        </nav>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="bg-white rounded-xl shadow-lg p-8 text-center">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <h3 class="mt-2 text-lg font-medium text-gray-900">No {{ time_filter }} bookings</h3>
+                        <p class="mt-1 text-sm text-gray-500">
+                            {% if time_filter == 'upcoming' %}
+                                Accept ride offers to see your upcoming bookings here.
+                            {% elif time_filter == 'today' %}
+                                You don't have any rides scheduled for today.
+                            {% else %}
+                                You haven't completed any rides yet.
+                            {% endif %}
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Waiting Time Optimizations -->
+                {% if optimizations %}
+                <div class="bg-purple-50 rounded-xl p-6 border border-purple-200">
+                    <h3 class="text-lg font-semibold text-purple-900 mb-4">Waiting Time Opportunities</h3>
+                    <div class="space-y-3">
+                        {% for opt in optimizations %}
+                        <div class="border-b border-purple-200 pb-3 last:border-0">
+                            <p class="text-sm text-purple-800">
+                                {{ opt.wait_duration_minutes }} min wait after ride to {{ opt.original_ride.dropoff_location|truncatewords:3 }}
+                            </p>
+                            <a href="{% url 'waiting_opportunities' optimization_id=opt.id %}" class="text-purple-600 hover:text-purple-700 text-sm font-medium">
+                                Find nearby rides →
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Quick Stats -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Today's Rides</span>
+                            <span class="font-medium">{{ bookings|length }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Est. Earnings</span>
+                            <span class="font-medium text-green-600">
+                                €{% widthratio bookings|length 1 25 %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
+                    <div class="space-y-3">
+                        <a href="{% url 'driver_calendar' %}" class="block w-full text-center bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">
+                            View Calendar
+                        </a>
+                        <a href="{% url 'driver_offers' %}" class="block w-full text-center border border-purple-600 text-purple-600 py-2 px-4 rounded-lg hover:bg-purple-50 transition-colors">
+                            Check New Offers
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

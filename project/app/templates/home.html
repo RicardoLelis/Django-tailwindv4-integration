@@ -168,9 +168,31 @@
                             </div>
                         {% endif %}
                         
-                        <button type="submit" class="w-full gradient-bg text-white py-4 px-6 rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200">
-                            Book Ride
-                        </button>
+                        <!-- Booking Options Description -->
+                        <div class="bg-gray-50 rounded-xl p-4 text-center">
+                            <p class="text-sm text-gray-600">
+                                <strong>Book Now</strong> for immediate rides or <strong>Pre-Book</strong> to schedule rides in advance with your preferred drivers
+                            </p>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Book Now Button -->
+                            <button type="submit" class="gradient-bg text-white py-4 px-6 rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Book Now
+                            </button>
+                            
+                            <!-- Pre-Book Ride Button -->
+                            <a href="{% url 'pre_book_ride' %}" class="bg-gradient-to-r from-purple-600 to-violet-600 text-white py-4 px-6 rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                Pre-Book Ride
+                            </a>
+                        </div>
                     </form>
                 </div>
             </div>

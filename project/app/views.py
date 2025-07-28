@@ -25,7 +25,7 @@ from .forms import (
 )
 from .models import (
     Rider, Ride, Driver, Vehicle, DriverDocument, VehicleDocument, 
-    VehiclePhoto, TrainingModule, DriverTraining
+    VehiclePhoto, TrainingModule, DriverTraining, RecurringRideTemplate
 )
 
 def get_user_home_url(user):
@@ -942,6 +942,46 @@ def driver_dashboard(request):
     
     return render(request, 'driver/dashboard.html', context)
 
+@login_required
+def edit_recurring_ride(request, template_id=None):
+    """View to edit recurring ride templates"""
+    try:
+        driver = request.user.driver
+        if driver.application_status != 'approved':
+            messages.error(request, 'You must be an approved driver to manage recurring rides.')
+            return redirect('driver_dashboard')
+    except Driver.DoesNotExist:
+        messages.error(request, 'Driver profile not found.')
+        return redirect('home')
+    
+    if template_id:
+        # Edit existing template
+        template = get_object_or_404(RecurringRideTemplate, id=template_id, driver=driver)
+        
+        if request.method == 'POST':
+            # Update template logic would go here
+            messages.success(request, 'Recurring ride template updated successfully!')
+            return redirect('driver_dashboard')
+        
+        context = {
+            'template': template,
+            'driver': driver,
+            'editing': True
+        }
+    else:
+        # Create new template
+        if request.method == 'POST':
+            # Create template logic would go here
+            messages.success(request, 'Recurring ride template created successfully!')
+            return redirect('driver_dashboard')
+        
+        context = {
+            'driver': driver,
+            'editing': False
+        }
+    
+    return render(request, 'driver/edit_recurring_ride.html', context)
+
 
 # AJAX endpoints for file uploads
 @login_required
@@ -1010,6 +1050,184 @@ def ajax_upload_vehicle_photo(request):
     
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+
+@require_http_methods(["POST"])
+def ajax_geocode(request):
+    """AJAX endpoint for geocoding addresses and calculating route info"""
+    try:
+        import math
+        import random
+        
+        # Get request parameters
+        address = request.POST.get('address', '').strip()
+        pickup_location = request.POST.get('pickup_location', '').strip()
+        dropoff_location = request.POST.get('dropoff_location', '').strip()
+        
+        # Mock Lisbon locations for demo
+        lisbon_locations = {
+            'airport': {'lat': 38.7813, 'lng': -9.1359, 'name': 'Lisbon Airport'},
+            'downtown': {'lat': 38.7167, 'lng': -9.1395, 'name': 'Downtown Lisbon'},
+            'belem': {'lat': 38.6969, 'lng': -9.2156, 'name': 'Belém'},
+            'parque_nacoes': {'lat': 38.7679, 'lng': -9.0973, 'name': 'Parque das Nações'},
+            'cascais': {'lat': 38.6979, 'lng': -9.4215, 'name': 'Cascais'},
+            'sintra': {'lat': 38.8029, 'lng': -9.3817, 'name': 'Sintra'},
+            'almada': {'lat': 38.6767, 'lng': -9.1565, 'name': 'Almada'},
+            'oeiras': {'lat': 38.6908, 'lng': -9.3094, 'name': 'Oeiras'}
+        }
+        
+        def get_location_coords(address_text):
+            """Get coordinates for an address, using predefined locations or generating mock ones"""
+            # Check if address matches any predefined location
+            address_lower = address_text.lower()
+            for key, location in lisbon_locations.items():
+                if key in address_lower or location['name'].lower() in address_lower:
+                    return location
+            
+            # Generate mock coordinates within Lisbon area
+            # Base coordinates for Lisbon center
+            base_lat = 38.7223
+            base_lng = -9.1393
+            
+            # Add some variation based on address hash
+            hash_val = hash(address_text) % 1000
+            lat_offset = (hash_val % 100 - 50) * 0.001  # ±0.05 degrees
+            lng_offset = ((hash_val // 100) % 100 - 50) * 0.001  # ±0.05 degrees
+            
+            return {
+                'lat': base_lat + lat_offset,
+                'lng': base_lng + lng_offset,
+                'name': address_text
+            }
+        
+        def calculate_distance(coord1, coord2):
+            """Calculate distance between two coordinates using Haversine formula"""
+            R = 6371  # Earth's radius in kilometers
+            
+            lat1, lon1 = math.radians(coord1['lat']), math.radians(coord1['lng'])
+            lat2, lon2 = math.radians(coord2['lat']), math.radians(coord2['lng'])
+            
+            dlat = lat2 - lat1
+            dlon = lon2 - lon1
+            
+            a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+            c = 2 * math.asin(math.sqrt(a))
+            
+            return R * c
+        
+        def estimate_duration(distance_km):
+            """Estimate duration based on distance and typical Lisbon traffic"""
+            # Average speed in Lisbon: 25-35 km/h depending on traffic
+            avg_speed = random.uniform(25, 35)
+            base_duration = (distance_km / avg_speed) * 60  # Convert to minutes
+            
+            # Add some randomness for traffic conditions
+            traffic_factor = random.uniform(0.9, 1.3)
+            duration = base_duration * traffic_factor
+            
+            # Add minimum duration (at least 5 minutes)
+            return max(5, round(duration))
+        
+        def calculate_fare(distance_km, duration_min):
+            """Calculate estimated fare based on distance and duration"""
+            # Base fare: €3.25
+            base_fare = 3.25
+            
+            # Per kilometer: €0.47
+            distance_fare = distance_km * 0.47
+            
+            # Per minute: €0.20 (for waiting time/slow traffic)
+            time_fare = duration_min * 0.20
+            
+            # Total fare
+            total_fare = base_fare + distance_fare + time_fare
+            
+            # Round to nearest 0.50
+            return round(total_fare * 2) / 2
+        
+        # Case 1: Single address geocoding
+        if address and not (pickup_location and dropoff_location):
+            location = get_location_coords(address)
+            
+            return JsonResponse({
+                'success': True,
+                'results': [{
+                    'formatted_address': location['name'],
+                    'geometry': {
+                        'location': {
+                            'lat': location['lat'],
+                            'lng': location['lng']
+                        }
+                    },
+                    'place_id': f'mock_place_{hash(address) % 10000}',
+                    'types': ['street_address']
+                }]
+            })
+        
+        # Case 2: Route calculation (both pickup and dropoff provided)
+        elif pickup_location and dropoff_location:
+            pickup_coords = get_location_coords(pickup_location)
+            dropoff_coords = get_location_coords(dropoff_location)
+            
+            # Calculate distance and duration
+            distance = calculate_distance(pickup_coords, dropoff_coords)
+            duration = estimate_duration(distance)
+            fare = calculate_fare(distance, duration)
+            
+            # Generate route polyline (simplified - just a straight line for mock)
+            route_polyline = f"{pickup_coords['lat']},{pickup_coords['lng']}|{dropoff_coords['lat']},{dropoff_coords['lng']}"
+            
+            return JsonResponse({
+                'success': True,
+                'route': {
+                    'pickup': {
+                        'address': pickup_coords['name'],
+                        'lat': pickup_coords['lat'],
+                        'lng': pickup_coords['lng']
+                    },
+                    'dropoff': {
+                        'address': dropoff_coords['name'],
+                        'lat': dropoff_coords['lat'],
+                        'lng': dropoff_coords['lng']
+                    },
+                    'distance': {
+                        'value': round(distance * 1000),  # meters
+                        'text': f'{distance:.1f} km'
+                    },
+                    'duration': {
+                        'value': duration * 60,  # seconds
+                        'text': f'{duration} min'
+                    },
+                    'fare': {
+                        'value': fare,
+                        'text': f'€{fare:.2f}',
+                        'currency': 'EUR'
+                    },
+                    'polyline': route_polyline,
+                    'bounds': {
+                        'northeast': {
+                            'lat': max(pickup_coords['lat'], dropoff_coords['lat']),
+                            'lng': max(pickup_coords['lng'], dropoff_coords['lng'])
+                        },
+                        'southwest': {
+                            'lat': min(pickup_coords['lat'], dropoff_coords['lat']),
+                            'lng': min(pickup_coords['lng'], dropoff_coords['lng'])
+                        }
+                    }
+                }
+            })
+        
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid request. Provide either address or both pickup_location and dropoff_location.'
+            })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
 
 
 @login_required

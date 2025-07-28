@@ -1,0 +1,119 @@
+<div class="space-y-2">
+    <!-- Step 1: Basic Info -->
+    <div class="flex items-center p-3 rounded-lg transition-all duration-200 {% if driver.application_status != 'started' %}bg-green-50 border border-green-200{% else %}bg-yellow-50 border border-yellow-200{% endif %}">
+        <div class="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center {% if driver.application_status != 'started' %}bg-green-600 text-white{% else %}bg-yellow-600 text-white{% endif %}">
+            {% if driver.application_status != 'started' %}
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+            {% else %}
+                <span class="text-sm font-bold">1</span>
+            {% endif %}
+        </div>
+        <div class="ml-3 flex-1">
+            <h4 class="font-medium text-sm">Basic Information & Eligibility</h4>
+            <p class="text-xs text-gray-600 mt-1">Personal details and requirements check</p>
+        </div>
+    </div>
+    
+    <!-- Step 2: Documents Upload -->
+    <div class="flex items-center p-3 rounded-lg transition-all duration-200 {% if driver.application_status in 'documents_uploaded,background_check_pending,training_in_progress,assessment_scheduled,approved' %}bg-green-50 border border-green-200{% elif driver.application_status == 'started' %}bg-yellow-50 border border-yellow-200{% else %}bg-gray-50 border border-gray-200{% endif %}">
+        <div class="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center {% if driver.application_status in 'documents_uploaded,background_check_pending,training_in_progress,assessment_scheduled,approved' %}bg-green-600 text-white{% elif driver.application_status == 'started' %}bg-yellow-600 text-white{% else %}bg-gray-400 text-white{% endif %}">
+            {% if driver.application_status in 'documents_uploaded,background_check_pending,training_in_progress,assessment_scheduled,approved' %}
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+            {% else %}
+                <span class="text-sm font-bold">2</span>
+            {% endif %}
+        </div>
+        <div class="ml-3 flex-1">
+            <h4 class="font-medium text-sm">Document Upload</h4>
+            <p class="text-xs text-gray-600 mt-1">Driver's license, ID, and proof of address</p>
+        </div>
+    </div>
+    
+    <!-- Step 3: Background Check -->
+    <div class="flex items-center p-3 rounded-lg transition-all duration-200 {% if driver.application_status in 'training_in_progress,assessment_scheduled,approved' and driver.background_check_status == 'approved' %}bg-green-50 border border-green-200{% elif driver.application_status == 'documents_uploaded' %}bg-yellow-50 border border-yellow-200{% elif driver.application_status == 'background_check_pending' and driver.background_check_status == 'pending' %}bg-blue-50 border border-blue-200{% else %}bg-gray-50 border border-gray-200{% endif %}">
+        <div class="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center {% if driver.application_status in 'training_in_progress,assessment_scheduled,approved' and driver.background_check_status == 'approved' %}bg-green-600 text-white{% elif driver.application_status == 'documents_uploaded' %}bg-yellow-600 text-white{% elif driver.application_status == 'background_check_pending' and driver.background_check_status == 'pending' %}bg-blue-600 text-white{% else %}bg-gray-400 text-white{% endif %}">
+            {% if driver.application_status in 'training_in_progress,assessment_scheduled,approved' and driver.background_check_status == 'approved' %}
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+            {% elif driver.application_status == 'background_check_pending' and driver.background_check_status == 'pending' %}
+                <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+            {% else %}
+                <span class="text-sm font-bold">3</span>
+            {% endif %}
+        </div>
+        <div class="ml-3 flex-1">
+            <h4 class="font-medium text-sm">Background Check</h4>
+            <p class="text-xs text-gray-600 mt-1">
+                {% if driver.application_status == 'background_check_pending' and driver.background_check_status == 'pending' %}
+                    Under review (2-3 business days)
+                {% else %}
+                    Criminal and driving record verification
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    
+    <!-- Step 4: Vehicle -->
+    <div class="flex items-center p-3 rounded-lg transition-all duration-200 {% if driver.application_status in 'training_in_progress,assessment_scheduled,approved' %}bg-green-50 border border-green-200{% elif driver.application_status == 'background_check_pending' and driver.background_check_status == 'approved' %}bg-yellow-50 border border-yellow-200{% else %}bg-gray-50 border border-gray-200{% endif %}">
+        <div class="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center {% if driver.application_status in 'training_in_progress,assessment_scheduled,approved' %}bg-green-600 text-white{% elif driver.application_status == 'background_check_pending' and driver.background_check_status == 'approved' %}bg-yellow-600 text-white{% else %}bg-gray-400 text-white{% endif %}">
+            {% if driver.application_status in 'training_in_progress,assessment_scheduled,approved' %}
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+            {% else %}
+                <span class="text-sm font-bold">4</span>
+            {% endif %}
+        </div>
+        <div class="ml-3 flex-1">
+            <h4 class="font-medium text-sm">Vehicle Registration</h4>
+            <p class="text-xs text-gray-600 mt-1">
+                {% if driver.application_status == 'background_check_pending' and driver.background_check_status != 'approved' %}
+                    Available after background check approval
+                {% else %}
+                    Vehicle details, accessibility features, and photos
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    
+    <!-- Step 5: Training -->
+    <div class="flex items-center p-3 rounded-lg transition-all duration-200 {% if driver.application_status in 'assessment_scheduled,approved' %}bg-green-50 border border-green-200{% elif driver.application_status == 'training_in_progress' %}bg-yellow-50 border border-yellow-200{% else %}bg-gray-50 border border-gray-200{% endif %}">
+        <div class="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center {% if driver.application_status in 'assessment_scheduled,approved' %}bg-green-600 text-white{% elif driver.application_status == 'training_in_progress' %}bg-yellow-600 text-white{% else %}bg-gray-400 text-white{% endif %}">
+            {% if driver.application_status in 'assessment_scheduled,approved' %}
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+            {% else %}
+                <span class="text-sm font-bold">5</span>
+            {% endif %}
+        </div>
+        <div class="ml-3 flex-1">
+            <h4 class="font-medium text-sm">Training & Certification</h4>
+            <p class="text-xs text-gray-600 mt-1">Accessibility training and practical assessment</p>
+        </div>
+    </div>
+    
+    <!-- Step 6: Approval -->
+    <div class="flex items-center p-3 rounded-lg transition-all duration-200 {% if driver.application_status == 'approved' %}bg-green-50 border border-green-200{% elif driver.application_status == 'assessment_scheduled' %}bg-yellow-50 border border-yellow-200{% else %}bg-gray-50 border border-gray-200{% endif %}">
+        <div class="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center {% if driver.application_status == 'approved' %}bg-green-600 text-white{% elif driver.application_status == 'assessment_scheduled' %}bg-yellow-600 text-white{% else %}bg-gray-400 text-white{% endif %}">
+            {% if driver.application_status == 'approved' %}
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+            {% else %}
+                <span class="text-sm font-bold">6</span>
+            {% endif %}
+        </div>
+        <div class="ml-3 flex-1">
+            <h4 class="font-medium text-sm">Final Approval</h4>
+            <p class="text-xs text-gray-600 mt-1">Review and activation</p>
+        </div>
+    </div>
+</div>

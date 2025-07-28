@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+
+{% block title %}Ride Offers - RideConnect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Ride Offers</h1>
+                    <p class="text-gray-600">Review and respond to pre-booked ride offers</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+                        {{ stats.pending_count }} Pending
+                    </span>
+                    <a href="{% url 'driver_dashboard' %}" class="text-purple-600 hover:text-purple-700">
+                        ← Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Filter Tabs -->
+        <div class="mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8">
+                    <a href="?status=pending" 
+                       class="{% if status_filter == 'pending' %}border-purple-500 text-purple-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Pending
+                    </a>
+                    <a href="?status=accepted" 
+                       class="{% if status_filter == 'accepted' %}border-purple-500 text-purple-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Accepted
+                    </a>
+                    <a href="?status=declined" 
+                       class="{% if status_filter == 'declined' %}border-purple-500 text-purple-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Declined
+                    </a>
+                    <a href="?status=expired" 
+                       class="{% if status_filter == 'expired' %}border-purple-500 text-purple-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Expired
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Offers List -->
+            <div class="lg:col-span-2">
+                {% if offers %}
+                    <div class="space-y-4">
+                        {% for offer in offers %}
+                        <div class="bg-white rounded-xl shadow-lg p-6 {% if offer.status == 'pending' and offer.expires_at > now %}border-2 border-yellow-400{% endif %}">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900">
+                                        {{ offer.pre_booked_ride.pickup_location }}
+                                    </h3>
+                                    <p class="text-gray-600 mt-1">
+                                        to {{ offer.pre_booked_ride.dropoff_location }}
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-bold text-green-600">€{{ offer.total_earnings|floatformat:2 }}</div>
+                                    {% if offer.bonus_amount > 0 %}
+                                        <div class="text-sm text-green-500">+€{{ offer.bonus_amount|floatformat:2 }} bonus</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <span class="text-sm text-gray-500">Pickup Time</span>
+                                    <p class="font-medium">{{ offer.pre_booked_ride.scheduled_pickup_time|date:"M j, g:i A" }}</p>
+                                </div>
+                                <div>
+                                    <span class="text-sm text-gray-500">Distance to Pickup</span>
+                                    <p class="font-medium">{{ offer.distance_to_pickup_km|floatformat:1 }} km</p>
+                                </div>
+                                <div>
+                                    <span class="text-sm text-gray-500">Estimated Duration</span>
+                                    <p class="font-medium">{{ offer.pre_booked_ride.estimated_duration_minutes }} min</p>
+                                </div>
+                                <div>
+                                    <span class="text-sm text-gray-500">Match Score</span>
+                                    <p class="font-medium">{{ offer.compatibility_score|floatformat:0 }}%</p>
+                                </div>
+                            </div>
+
+                            {% if offer.pre_booked_ride.special_requirements %}
+                            <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700">Special Requirements:</span>
+                                <p class="text-sm text-gray-600 mt-1">{{ offer.pre_booked_ride.special_requirements }}</p>
+                            </div>
+                            {% endif %}
+
+                            {% if offer.pre_booked_ride.wheelchair_required %}
+                            <div class="mb-4">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M3.5 2.5a.5.5 0 00-1 0v8.793l-.646-.647a.5.5 0 00-.708.708l1.5 1.5a.5.5 0 00.708 0l1.5-1.5a.5.5 0 00-.708-.708L3.5 11.293V2.5z"/>
+                                    </svg>
+                                    Wheelchair Accessible
+                                </span>
+                            </div>
+                            {% endif %}
+
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    {% if offer.status == 'pending' %}
+                                        {% if offer.is_expired %}
+                                            <span class="text-sm text-red-600">Expired</span>
+                                        {% else %}
+                                            <span class="text-sm text-gray-500">
+                                                Expires in {{ offer.time_to_respond.total_seconds|floatformat:0 }} seconds
+                                            </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="px-3 py-1 rounded-full text-sm font-medium
+                                            {% if offer.status == 'accepted' %}bg-green-100 text-green-800
+                                            {% elif offer.status == 'declined' %}bg-red-100 text-red-800
+                                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            {{ offer.get_status_display }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if offer.status == 'pending' and not offer.is_expired %}
+                                <div class="flex space-x-3">
+                                    <form method="post" action="{% url 'accept_offer' offer_id=offer.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="bg-green-600 text-white py-2 px-6 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                            Accept
+                                        </button>
+                                    </form>
+                                    <form method="post" action="{% url 'decline_offer' offer_id=offer.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="response" value="decline">
+                                        <button type="submit" class="bg-gray-300 text-gray-700 py-2 px-6 rounded-lg hover:bg-gray-400 transition-colors font-medium">
+                                            Decline
+                                        </button>
+                                    </form>
+                                </div>
+                                {% elif offer.status == 'accepted' %}
+                                <a href="{% url 'driver_booking_detail' booking_id=offer.pre_booked_ride.id %}" class="text-purple-600 hover:text-purple-700 font-medium">
+                                    View Details →
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if offers.has_other_pages %}
+                    <div class="mt-8 flex justify-center">
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                            {% if offers.has_previous %}
+                                <a href="?page={{ offers.previous_page_number }}&status={{ status_filter }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    Previous
+                                </a>
+                            {% endif %}
+                            
+                            {% for num in offers.paginator.page_range %}
+                                {% if offers.number == num %}
+                                    <span class="relative inline-flex items-center px-4 py-2 border border-purple-500 bg-purple-50 text-sm font-medium text-purple-600">
+                                        {{ num }}
+                                    </span>
+                                {% else %}
+                                    <a href="?page={{ num }}&status={{ status_filter }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                        {{ num }}
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if offers.has_next %}
+                                <a href="?page={{ offers.next_page_number }}&status={{ status_filter }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    Next
+                                </a>
+                            {% endif %}
+                        </nav>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="bg-white rounded-xl shadow-lg p-8 text-center">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        <h3 class="mt-2 text-lg font-medium text-gray-900">No {{ status_filter }} offers</h3>
+                        <p class="mt-1 text-sm text-gray-500">
+                            {% if status_filter == 'pending' %}
+                                Check back later for new ride offers.
+                            {% else %}
+                                You don't have any {{ status_filter }} offers.
+                            {% endif %}
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Performance Stats -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Offer Statistics</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Pending Offers</span>
+                            <span class="font-medium">{{ stats.pending_count }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Acceptance Rate</span>
+                            <span class="font-medium">{{ stats.acceptance_rate|floatformat:0 }}%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tips -->
+                <div class="bg-blue-50 rounded-xl p-6 border border-blue-200">
+                    <h3 class="text-lg font-semibold text-blue-900 mb-3">Tips for Success</h3>
+                    <ul class="space-y-2 text-sm text-blue-800">
+                        <li>• Respond to offers quickly to secure the best rides</li>
+                        <li>• Check the special requirements before accepting</li>
+                        <li>• Higher match scores mean better route efficiency</li>
+                        <li>• Bonus amounts are added for high-priority rides</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

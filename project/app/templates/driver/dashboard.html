@@ -26,12 +26,12 @@
     </div>
 
     <div class="container mx-auto px-4 py-8">
-        <div class="grid lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             <!-- Main Content -->
-            <div class="lg:col-span-2 space-y-8">
-                <!-- Application Progress -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Application Progress</h2>
+            <div class="lg:col-span-2 space-y-6 lg:space-y-8">
+                <!-- Application Status & Progress -->
+                <div class="bg-white rounded-xl shadow-lg p-4 lg:p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Application Status</h2>
                     
                     <!-- Progress Bar -->
                     <div class="mb-6">
@@ -45,16 +45,16 @@
                     </div>
                     
                     <!-- Next Step -->
-                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
                         <h3 class="text-lg font-medium text-purple-900 mb-2">Next Step</h3>
                         <p class="text-purple-800">{{ next_step }}</p>
                         
                         {% if driver.application_status == 'started' %}
-                            <a href="{% url 'driver_upload_documents' %}" class="inline-block mt-3 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <a href="{% url 'driver_upload_documents' %}" class="inline-block mt-3 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors min-h-[40px] flex items-center">
                                 Upload Documents
                             </a>
                         {% elif driver.application_status == 'documents_uploaded' %}
-                            <a href="{% url 'driver_background_consent' %}" class="inline-block mt-3 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <a href="{% url 'driver_background_consent' %}" class="inline-block mt-3 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors min-h-[40px] flex items-center">
                                 Provide Consent
                             </a>
                         {% elif driver.application_status == 'background_check_pending' %}
@@ -64,45 +64,85 @@
                                     <p class="text-sm mt-1">This usually takes 2-3 business days. We'll notify you once approved.</p>
                                 </div>
                                 {% if driver.background_check_status == 'approved' %}
-                                    <a href="{% url 'driver_register_vehicle' %}" class="inline-block mt-3 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                                    <a href="{% url 'driver_register_vehicle' %}" class="inline-block mt-3 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors min-h-[40px] flex items-center">
                                         Register Vehicle
                                     </a>
                                 {% endif %}
                             </div>
                         {% elif driver.application_status == 'training_in_progress' %}
-                            <a href="{% url 'driver_training' %}" class="inline-block mt-3 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <a href="{% url 'driver_training' %}" class="inline-block mt-3 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors min-h-[40px] flex items-center">
                                 Continue Training
                             </a>
                         {% endif %}
+                    </div>
+
+                    <!-- Application Checklist - Dropdown for All Devices -->
+                    <div class="border-t border-gray-200 pt-6">
+                        <div class="checklist-dropdown">
+                            <button 
+                                type="button" 
+                                class="w-full flex items-center justify-between py-3 px-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 shadow-sm hover:shadow-md"
+                                onclick="toggleChecklist()"
+                                id="checklist-toggle"
+                                aria-expanded="false"
+                                aria-controls="checklist-content"
+                            >
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 mr-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span class="font-medium text-gray-900">Application Checklist</span>
+                                    <span class="ml-2 text-sm text-gray-500">({{ progress }}% complete)</span>
+                                </div>
+                                <svg 
+                                    class="w-5 h-5 text-gray-400 transform transition-transform duration-200" 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    viewBox="0 0 24 24"
+                                    id="checklist-arrow"
+                                >
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            
+                            <div 
+                                class="checklist-content overflow-hidden transition-all duration-300 ease-in-out max-h-0"
+                                id="checklist-content"
+                            >
+                                <div class="pt-4 pb-2">
+                                    {% include 'driver/partials/application_checklist.html' %}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Quick Stats -->
                 {% if driver.application_status == 'approved' %}
-                <div class="grid md:grid-cols-4 gap-4">
-                    <div class="bg-white rounded-xl shadow-lg p-6 text-center">
-                        <div class="text-3xl font-bold text-green-600">{{ today_stats.rides|default:"0" }}</div>
-                        <div class="text-gray-600 mt-1">Today's Rides</div>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+                    <div class="bg-white rounded-xl shadow-lg p-4 lg:p-6 text-center">
+                        <div class="text-2xl lg:text-3xl font-bold text-green-600">{{ today_stats.rides|default:"0" }}</div>
+                        <div class="text-gray-600 mt-1 text-sm lg:text-base">Today's Rides</div>
                     </div>
-                    <div class="bg-white rounded-xl shadow-lg p-6 text-center">
-                        <div class="text-3xl font-bold text-purple-600">€{{ today_stats.earnings|default:"0"|floatformat:2 }}</div>
-                        <div class="text-gray-600 mt-1">Today's Earnings</div>
+                    <div class="bg-white rounded-xl shadow-lg p-4 lg:p-6 text-center">
+                        <div class="text-2xl lg:text-3xl font-bold text-purple-600">€{{ today_stats.earnings|default:"0"|floatformat:2 }}</div>
+                        <div class="text-gray-600 mt-1 text-sm lg:text-base">Today's Earnings</div>
                     </div>
-                    <div class="bg-white rounded-xl shadow-lg p-6 text-center">
-                        <div class="text-3xl font-bold text-yellow-600">{{ driver.rating|floatformat:1 }}</div>
-                        <div class="text-gray-600 mt-1">Rating</div>
+                    <div class="bg-white rounded-xl shadow-lg p-4 lg:p-6 text-center">
+                        <div class="text-2xl lg:text-3xl font-bold text-yellow-600">{{ driver.rating|floatformat:1 }}</div>
+                        <div class="text-gray-600 mt-1 text-sm lg:text-base">Rating</div>
                     </div>
-                    <div class="bg-white rounded-xl shadow-lg p-6 text-center">
-                        <div class="text-3xl font-bold text-blue-600">
+                    <div class="bg-white rounded-xl shadow-lg p-4 lg:p-6 text-center">
+                        <div class="text-2xl lg:text-3xl font-bold text-blue-600">
                             {% if driver.is_available %}Online{% else %}Offline{% endif %}
                         </div>
-                        <div class="text-gray-600 mt-1">Status</div>
+                        <div class="text-gray-600 mt-1 text-sm lg:text-base">Status</div>
                     </div>
                 </div>
 
                 <!-- Performance Overview -->
                 {% if week_stats or month_stats %}
-                <div class="grid md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                     {% if week_stats %}
                     <div class="bg-white rounded-xl shadow-lg p-6">
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">This Week</h3>
@@ -155,9 +195,11 @@
 
                 <!-- Recent Rides -->
                 {% if recent_rides %}
-                <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="bg-white rounded-xl shadow-lg p-4 lg:p-6">
                     <h3 class="text-xl font-semibold text-gray-900 mb-4">Recent Rides</h3>
-                    <div class="overflow-x-auto">
+                    
+                    <!-- Desktop Table View -->
+                    <div class="hidden lg:block overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead>
                                 <tr>
@@ -204,6 +246,47 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Mobile Card View -->
+                    <div class="lg:hidden space-y-4">
+                        {% for ride in recent_rides %}
+                        <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex-1">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ ride.ride.pickup_datetime|date:"M j, g:i A" }}
+                                    </div>
+                                    <div class="flex items-center justify-between mt-1">
+                                        <span class="text-lg font-bold text-green-600">€{{ ride.driver_earnings|floatformat:2 }}</span>
+                                        {% if ride.driver_rating %}
+                                            <span class="text-sm text-gray-600">{{ ride.driver_rating }} ⭐</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <span class="px-2 py-1 text-xs font-medium rounded-full ml-3
+                                    {% if ride.ride.status == 'completed' %}bg-green-100 text-green-800
+                                    {% elif ride.ride.status == 'cancelled' %}bg-red-100 text-red-800
+                                    {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                    {{ ride.ride.get_status_display }}
+                                </span>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <span class="truncate">{{ ride.ride.pickup_location }}</span>
+                                </div>
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <svg class="w-4 h-4 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <span class="truncate">{{ ride.ride.dropoff_location }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
                     
                     {% if recent_rides.count == 10 %}
                     <div class="mt-4 text-center">
@@ -222,94 +305,10 @@
                 {% endif %}
                 {% endif %}
 
-                <!-- Application Steps Checklist -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-6">Application Checklist</h2>
-                    
-                    <div class="space-y-4">
-                        <!-- Step 1: Basic Info -->
-                        <div class="flex items-center p-4 rounded-lg {% if driver.application_status != 'started' %}bg-green-50 border border-green-200{% else %}bg-yellow-50 border border-yellow-200{% endif %}">
-                            <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center {% if driver.application_status != 'started' %}bg-green-600 text-white{% else %}bg-yellow-600 text-white{% endif %}">
-                                {% if driver.application_status != 'started' %}✓{% else %}1{% endif %}
-                            </div>
-                            <div class="ml-4 flex-1">
-                                <h3 class="font-medium">Basic Information & Eligibility</h3>
-                                <p class="text-sm text-gray-600">Personal details and requirements check</p>
-                            </div>
-                        </div>
-                        
-                        <!-- Step 2: Documents Upload -->
-                        <div class="flex items-center p-4 rounded-lg {% if driver.application_status in 'documents_uploaded,background_check_pending,training_in_progress,assessment_scheduled,approved' %}bg-green-50 border border-green-200{% elif driver.application_status == 'started' %}bg-yellow-50 border border-yellow-200{% else %}bg-gray-50 border border-gray-200{% endif %}">
-                            <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center {% if driver.application_status in 'documents_uploaded,background_check_pending,training_in_progress,assessment_scheduled,approved' %}bg-green-600 text-white{% elif driver.application_status == 'started' %}bg-yellow-600 text-white{% else %}bg-gray-400 text-white{% endif %}">
-                                {% if driver.application_status in 'documents_uploaded,background_check_pending,training_in_progress,assessment_scheduled,approved' %}✓{% else %}2{% endif %}
-                            </div>
-                            <div class="ml-4 flex-1">
-                                <h3 class="font-medium">Document Upload</h3>
-                                <p class="text-sm text-gray-600">Driver's license, ID, and proof of address</p>
-                            </div>
-                        </div>
-                        
-                        <!-- Step 3: Background Check -->
-                        <div class="flex items-center p-4 rounded-lg {% if driver.application_status in 'background_check_pending,training_in_progress,assessment_scheduled,approved' and driver.background_check_consent %}bg-green-50 border border-green-200{% elif driver.application_status == 'documents_uploaded' %}bg-yellow-50 border border-yellow-200{% elif driver.application_status == 'background_check_pending' and driver.background_check_status == 'pending' %}bg-blue-50 border border-blue-200{% else %}bg-gray-50 border border-gray-200{% endif %}">
-                            <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center {% if driver.application_status in 'background_check_pending,training_in_progress,assessment_scheduled,approved' and driver.background_check_consent %}bg-green-600 text-white{% elif driver.application_status == 'documents_uploaded' %}bg-yellow-600 text-white{% elif driver.application_status == 'background_check_pending' and driver.background_check_status == 'pending' %}bg-blue-600 text-white{% else %}bg-gray-400 text-white{% endif %}">
-                                {% if driver.application_status in 'training_in_progress,assessment_scheduled,approved' and driver.background_check_status == 'approved' %}✓{% elif driver.application_status == 'background_check_pending' and driver.background_check_status == 'pending' %}⏳{% else %}3{% endif %}
-                            </div>
-                            <div class="ml-4 flex-1">
-                                <h3 class="font-medium">Background Check</h3>
-                                <p class="text-sm text-gray-600">
-                                    {% if driver.application_status == 'background_check_pending' and driver.background_check_status == 'pending' %}
-                                        Under review (2-3 business days)
-                                    {% else %}
-                                        Criminal and driving record verification
-                                    {% endif %}
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <!-- Step 4: Vehicle -->
-                        <div class="flex items-center p-4 rounded-lg {% if driver.application_status in 'training_in_progress,assessment_scheduled,approved' %}bg-green-50 border border-green-200{% elif driver.application_status == 'background_check_pending' and driver.background_check_status == 'approved' %}bg-yellow-50 border border-yellow-200{% else %}bg-gray-50 border border-gray-200{% endif %}">
-                            <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center {% if driver.application_status in 'training_in_progress,assessment_scheduled,approved' %}bg-green-600 text-white{% elif driver.application_status == 'background_check_pending' and driver.background_check_status == 'approved' %}bg-yellow-600 text-white{% else %}bg-gray-400 text-white{% endif %}">
-                                {% if driver.application_status in 'training_in_progress,assessment_scheduled,approved' %}✓{% else %}4{% endif %}
-                            </div>
-                            <div class="ml-4 flex-1">
-                                <h3 class="font-medium">Vehicle Registration</h3>
-                                <p class="text-sm text-gray-600">
-                                    {% if driver.application_status == 'background_check_pending' and driver.background_check_status != 'approved' %}
-                                        Available after background check approval
-                                    {% else %}
-                                        Vehicle details, accessibility features, and photos
-                                    {% endif %}
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <!-- Step 5: Training -->
-                        <div class="flex items-center p-4 rounded-lg {% if driver.application_status in 'assessment_scheduled,approved' %}bg-green-50 border border-green-200{% elif driver.application_status == 'training_in_progress' %}bg-yellow-50 border border-yellow-200{% else %}bg-gray-50 border border-gray-200{% endif %}">
-                            <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center {% if driver.application_status in 'assessment_scheduled,approved' %}bg-green-600 text-white{% elif driver.application_status == 'training_in_progress' %}bg-yellow-600 text-white{% else %}bg-gray-400 text-white{% endif %}">
-                                {% if driver.application_status in 'assessment_scheduled,approved' %}✓{% else %}5{% endif %}
-                            </div>
-                            <div class="ml-4 flex-1">
-                                <h3 class="font-medium">Training & Certification</h3>
-                                <p class="text-sm text-gray-600">Accessibility training and practical assessment</p>
-                            </div>
-                        </div>
-                        
-                        <!-- Step 6: Approval -->
-                        <div class="flex items-center p-4 rounded-lg {% if driver.application_status == 'approved' %}bg-green-50 border border-green-200{% elif driver.application_status == 'assessment_scheduled' %}bg-yellow-50 border border-yellow-200{% else %}bg-gray-50 border border-gray-200{% endif %}">
-                            <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center {% if driver.application_status == 'approved' %}bg-green-600 text-white{% elif driver.application_status == 'assessment_scheduled' %}bg-yellow-600 text-white{% else %}bg-gray-400 text-white{% endif %}">
-                                {% if driver.application_status == 'approved' %}✓{% else %}6{% endif %}
-                            </div>
-                            <div class="ml-4 flex-1">
-                                <h3 class="font-medium">Final Approval</h3>
-                                <p class="text-sm text-gray-600">Review and activation</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Sidebar -->
-            <div class="space-y-6">
+            <div class="space-y-4 lg:space-y-6">
                 <!-- Contact Support -->
                 <div class="bg-white rounded-xl shadow-lg p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Need Help?</h3>
@@ -350,28 +349,56 @@
                 {% endif %}
 
                 <!-- Quick Actions -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="bg-white rounded-xl shadow-lg p-4 lg:p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                    <div class="space-y-2">
+                    <div class="space-y-3">
                         {% if driver.application_status == 'started' %}
-                            <a href="{% url 'driver_register_professional' %}" class="block w-full text-center bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">
+                            <a href="{% url 'driver_register_professional' %}" class="block w-full text-center bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium min-h-[44px] flex items-center justify-center">
                                 Continue Application
                             </a>
                         {% elif driver.application_status == 'training_in_progress' %}
-                            <a href="{% url 'driver_training' %}" class="block w-full text-center bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">
+                            <a href="{% url 'driver_training' %}" class="block w-full text-center bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium min-h-[44px] flex items-center justify-center">
                                 Continue Training
                             </a>
                         {% elif driver.application_status == 'approved' %}
-                            <button class="block w-full text-center bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
-                                Go Online
+                            <button id="toggle-status-btn" 
+                                    onclick="toggleDriverStatus()"
+                                    class="block w-full text-center py-3 px-4 rounded-lg transition-colors font-medium min-h-[44px] flex items-center justify-center
+                                    {% if driver.is_available %}bg-red-600 text-white hover:bg-red-700{% else %}bg-green-600 text-white hover:bg-green-700{% endif %}">
+                                <span id="status-text">{% if driver.is_available %}Go Offline{% else %}Go Online{% endif %}</span>
+                                <svg id="status-loader" class="hidden animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
                             </button>
                         {% endif %}
                         
-                        <a href="{% url 'driver_documents' %}" class="block w-full text-center border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors">
+                        <a href="{% url 'driver_documents' %}" class="block w-full text-center border border-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors font-medium min-h-[44px] flex items-center justify-center">
                             View Documents
                         </a>
                     </div>
                 </div>
+
+                {% if driver.application_status == 'approved' %}
+                <!-- Live Offers Section -->
+                <div id="live-offers-section" class="bg-white rounded-xl shadow-lg p-4 lg:p-6 {% if not driver.is_available %}hidden{% endif %}">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <span class="relative flex h-3 w-3 mr-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                        </span>
+                        Live Offers
+                    </h3>
+                    <div id="offers-container" class="space-y-3">
+                        <div class="text-center py-8 text-gray-500">
+                            <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p class="text-sm">Waiting for ride offers...</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
 
                 <!-- Earnings Preview -->
                 {% if driver.application_status == 'approved' %}
@@ -386,4 +413,440 @@
         </div>
     </div>
 </div>
+
+<script>
+// Application Checklist Dropdown Functionality
+let checklistOpen = false;
+
+function toggleChecklist() {
+    const content = document.getElementById('checklist-content');
+    const arrow = document.getElementById('checklist-arrow');
+    const toggle = document.getElementById('checklist-toggle');
+    
+    if (!content || !arrow || !toggle) return;
+    
+    checklistOpen = !checklistOpen;
+    
+    if (checklistOpen) {
+        // Open the dropdown
+        content.style.maxHeight = content.scrollHeight + 'px';
+        arrow.classList.add('rotate-180');
+        toggle.setAttribute('aria-expanded', 'true');
+        toggle.classList.add('bg-gray-100');
+        toggle.classList.remove('bg-gray-50');
+    } else {
+        // Close the dropdown
+        content.style.maxHeight = '0px';
+        arrow.classList.remove('rotate-180');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.classList.add('bg-gray-50');
+        toggle.classList.remove('bg-gray-100');
+    }
+}
+
+// Driver Status Management
+let isOnline = {% if driver.is_available %}true{% else %}false{% endif %};
+let locationInterval = null;
+let offersInterval = null;
+let currentPosition = null;
+
+// NOTE: The following features require backend implementation:
+// - /driver/toggle-status/ - Toggle driver online/offline status
+// - /driver/update-location/ - Update driver location
+// - /driver/check-offers/ - Check for new ride offers
+// - /driver/offers/{id}/accept/ - Accept a ride offer
+// - /driver/offers/{id}/decline/ - Decline a ride offer
+// For now, the frontend implementation is complete but will show errors until these endpoints are created.
+
+// Development mode flag - set to false for production
+const DEVELOPMENT_MODE = false;
+
+// Toggle driver online/offline status
+async function toggleDriverStatus() {
+    const button = document.getElementById('toggle-status-btn');
+    const statusText = document.getElementById('status-text');
+    const loader = document.getElementById('status-loader');
+    
+    // Show loading state
+    statusText.classList.add('opacity-50');
+    loader.classList.remove('hidden');
+    button.disabled = true;
+    
+    try {
+        // If going online, request location permission first
+        if (!isOnline) {
+            try {
+                const position = await getCurrentPosition();
+                currentPosition = position;
+            } catch (error) {
+                alert('Location access is required to go online. Please enable location services.');
+                statusText.classList.remove('opacity-50');
+                loader.classList.add('hidden');
+                button.disabled = false;
+                return;
+            }
+        }
+        
+        // Make AJAX request to toggle status
+        let data;
+        
+        if (DEVELOPMENT_MODE) {
+            // Mock response for development
+            await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+            data = { is_available: !isOnline };
+        } else {
+            // TODO: Implement driver_toggle_status endpoint
+            const response = await fetch('/driver/toggle-status/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    status: !isOnline,
+                    latitude: currentPosition ? currentPosition.coords.latitude : null,
+                    longitude: currentPosition ? currentPosition.coords.longitude : null
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to update status');
+            }
+            
+            data = await response.json();
+        }
+        
+        // Update UI based on new status
+        isOnline = data.is_available;
+        updateStatusUI();
+        
+        // Start or stop location tracking and offer polling
+        if (isOnline) {
+            startLocationTracking();
+            startOfferPolling();
+        } else {
+            stopLocationTracking();
+            stopOfferPolling();
+        }
+        
+    } catch (error) {
+        console.error('Error toggling status:', error);
+        alert('Failed to update status. Please try again.');
+    } finally {
+        // Reset button state
+        statusText.classList.remove('opacity-50');
+        loader.classList.add('hidden');
+        button.disabled = false;
+    }
+}
+
+// Update UI based on driver status
+function updateStatusUI() {
+    const button = document.getElementById('toggle-status-btn');
+    const statusText = document.getElementById('status-text');
+    const liveOffersSection = document.getElementById('live-offers-section');
+    const statusDisplay = document.querySelector('[class*="text-blue-600"]');
+    
+    if (isOnline) {
+        button.classList.remove('bg-green-600', 'hover:bg-green-700');
+        button.classList.add('bg-red-600', 'hover:bg-red-700');
+        statusText.textContent = 'Go Offline';
+        if (liveOffersSection) {
+            liveOffersSection.classList.remove('hidden');
+        }
+        if (statusDisplay) {
+            statusDisplay.textContent = 'Online';
+        }
+    } else {
+        button.classList.remove('bg-red-600', 'hover:bg-red-700');
+        button.classList.add('bg-green-600', 'hover:bg-green-700');
+        statusText.textContent = 'Go Online';
+        if (liveOffersSection) {
+            liveOffersSection.classList.add('hidden');
+        }
+        if (statusDisplay) {
+            statusDisplay.textContent = 'Offline';
+        }
+    }
+}
+
+// Get current position using geolocation API
+function getCurrentPosition() {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            reject(new Error('Geolocation is not supported'));
+            return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+            position => resolve(position),
+            error => reject(error),
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    });
+}
+
+// Start tracking driver location
+function startLocationTracking() {
+    // Update location immediately
+    updateDriverLocation();
+    
+    // Update location every 30 seconds
+    locationInterval = setInterval(updateDriverLocation, 30000);
+}
+
+// Stop tracking driver location
+function stopLocationTracking() {
+    if (locationInterval) {
+        clearInterval(locationInterval);
+        locationInterval = null;
+    }
+}
+
+// Update driver location on server
+async function updateDriverLocation() {
+    try {
+        const position = await getCurrentPosition();
+        currentPosition = position;
+        
+        if (DEVELOPMENT_MODE) {
+            // Mock location update for development
+            console.log('Mock location update:', position.coords.latitude, position.coords.longitude);
+        } else {
+            // TODO: Implement driver_update_location endpoint
+            await fetch('/driver/update-location/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                })
+            });
+        }
+    } catch (error) {
+        console.error('Failed to update location:', error);
+    }
+}
+
+// Start polling for ride offers
+function startOfferPolling() {
+    // Check for offers immediately
+    checkForOffers();
+    
+    // Check for offers every 30 seconds
+    offersInterval = setInterval(checkForOffers, 30000);
+}
+
+// Stop polling for ride offers
+function stopOfferPolling() {
+    if (offersInterval) {
+        clearInterval(offersInterval);
+        offersInterval = null;
+    }
+}
+
+// Check for new ride offers
+async function checkForOffers() {
+    try {
+        let data;
+        
+        if (DEVELOPMENT_MODE) {
+            // Mock offers for development
+            const mockOffers = Math.random() > 0.7 ? [
+                {
+                    id: Math.floor(Math.random() * 1000),
+                    pickup_location: 'Praça do Comércio, Lisboa',
+                    dropoff_location: 'Aeroporto de Lisboa',
+                    passenger_name: 'João Silva',
+                    estimated_fare: (15 + Math.random() * 20).toFixed(2),
+                    distance: (8 + Math.random() * 10).toFixed(1),
+                    is_wheelchair_accessible: Math.random() > 0.8,
+                    expires_in: 60
+                }
+            ] : [];
+            data = { offers: mockOffers };
+        } else {
+            const response = await fetch('/driver/live-offers/');
+            if (!response.ok) {
+                throw new Error('Failed to fetch offers');
+            }
+            data = await response.json();
+        }
+        
+        displayOffers(data.offers);
+    } catch (error) {
+        console.error('Failed to check for offers:', error);
+    }
+}
+
+// Display ride offers
+function displayOffers(offers) {
+    const container = document.getElementById('offers-container');
+    
+    if (!offers || offers.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+                <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-sm">Waiting for ride offers...</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = offers.map(offer => `
+        <div class="border border-gray-200 rounded-lg p-4 bg-yellow-50 border-yellow-200">
+            <div class="flex justify-between items-start mb-3">
+                <div>
+                    <h4 class="font-semibold text-gray-900">${offer.pickup_location}</h4>
+                    <p class="text-sm text-gray-600 mt-1">to ${offer.dropoff_location}</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-lg font-bold text-green-600">€${offer.estimated_fare}</div>
+                    <div class="text-xs text-gray-500">${offer.distance} km</div>
+                </div>
+            </div>
+            <div class="flex items-center text-sm text-gray-600 mb-3">
+                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"></path>
+                </svg>
+                ${offer.passenger_name}
+                ${offer.is_wheelchair_accessible ? '<span class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">Wheelchair</span>' : ''}
+            </div>
+            <div class="flex gap-2">
+                <button onclick="acceptOffer(${offer.id})" class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                    Accept
+                </button>
+                <button onclick="declineOffer(${offer.id})" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors font-medium">
+                    Decline
+                </button>
+            </div>
+            <div class="text-xs text-gray-500 mt-2 text-center">
+                Expires in <span class="font-mono">${offer.expires_in}</span> seconds
+            </div>
+        </div>
+    `).join('');
+}
+
+// Accept ride offer
+async function acceptOffer(offerId) {
+    try {
+        let data;
+        
+        if (DEVELOPMENT_MODE) {
+            // Mock accept offer for development
+            await new Promise(resolve => setTimeout(resolve, 500));
+            alert('Mock: Offer accepted! In production, this would redirect to the ride details page.');
+            checkForOffers(); // Refresh offers
+            return;
+        } else {
+            const response = await fetch(`/driver/offers/${offerId}/accept/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to accept offer');
+            }
+            
+            data = await response.json();
+        }
+        
+        if (data.success) {
+            // Redirect to ride details or show success message
+            window.location.href = data.redirect_url;
+        } else {
+            alert(data.message || 'Failed to accept offer');
+        }
+    } catch (error) {
+        console.error('Error accepting offer:', error);
+        alert('Failed to accept offer. Please try again.');
+    }
+}
+
+// Decline ride offer
+async function declineOffer(offerId) {
+    try {
+        if (DEVELOPMENT_MODE) {
+            // Mock decline offer for development
+            await new Promise(resolve => setTimeout(resolve, 300));
+            console.log('Mock: Offer declined');
+        } else {
+            // TODO: Implement driver_decline_offer endpoint
+            const response = await fetch(`/driver/offers/${offerId}/decline/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to decline offer');
+            }
+        }
+        
+        // Refresh offers
+        checkForOffers();
+    } catch (error) {
+        console.error('Error declining offer:', error);
+        alert('Failed to decline offer. Please try again.');
+    }
+}
+
+// Get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Set initial state - closed
+    const content = document.getElementById('checklist-content');
+    const toggle = document.getElementById('checklist-toggle');
+    
+    if (content && toggle) {
+        content.style.maxHeight = '0px';
+        toggle.setAttribute('aria-expanded', 'false');
+    }
+    
+    // Add keyboard support
+    const checklistToggle = document.getElementById('checklist-toggle');
+    if (checklistToggle) {
+        checklistToggle.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleChecklist();
+            }
+        });
+    }
+    
+    // Start location tracking and offer polling if driver is online
+    if (isOnline) {
+        startLocationTracking();
+        startOfferPolling();
+    }
+});
+</script>
 {% endblock %}
