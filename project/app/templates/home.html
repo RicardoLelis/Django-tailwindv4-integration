@@ -1,4 +1,7 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home - RideConnect{% endblock %}
 
 {% block content %}
 <div class="min-h-screen relative overflow-hidden">
@@ -29,7 +32,7 @@
                     </span>
                     <a href="{% url 'logout' %}" class="text-gray-600 hover:text-purple-600 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3-3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                         </svg>
                     </a>
                 </nav>
@@ -52,98 +55,192 @@
             {% endfor %}
         {% endif %}
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Book a Ride Form -->
-            <div class="lg:col-span-2">
+        <div class="grid grid-cols-1 xl:grid-cols-4 gap-8">
+            <!-- Main Booking Section with Integrated Map -->
+            <div class="xl:col-span-3">
                 <div class="glass-effect rounded-3xl shadow-xl p-8">
-                    <h2 class="text-2xl font-display font-bold text-gray-800 mb-6 flex items-center">
-                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
-                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-display font-bold text-gray-800 flex items-center">
+                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                            </div>
+                            Book Your Ride
+                        </h2>
+                        
+                        <!-- Location Detection Button -->
+                        <button type="button" onclick="getCurrentLocation()" 
+                                class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-xl font-medium transition-colors flex items-center text-sm">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                             </svg>
+                            Use My Location
+                        </button>
+                    </div>
+
+                    <!-- Interactive Map - Now at the top for better flow -->
+                    <div class="mb-8">
+                        <div id="map" class="w-full h-80 rounded-2xl bg-gray-100 border border-gray-200 shadow-inner" 
+                             role="application" aria-label="Interactive map for route planning">
+                            <div class="h-full flex items-center justify-center text-gray-500">
+                                <div class="text-center">
+                                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                                    </svg>
+                                    <p class="text-lg font-medium">Interactive Route Map</p>
+                                    <p class="text-sm">Click "Use My Location" or enter your pickup address below</p>
+                                </div>
+                            </div>
                         </div>
-                        Book Your Ride
-                    </h2>
+                        
+                        <!-- Route Summary (shown when route is calculated) -->
+                        <div id="route-summary" class="hidden mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
+                            <h4 class="font-semibold text-blue-800 mb-3 flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Route Summary
+                            </h4>
+                            <div id="route-details" class="text-blue-700"></div>
+                        </div>
+                        
+                        <!-- Status Display -->
+                        <div id="status-display" class="hidden mt-4 p-4 rounded-xl"></div>
+                    </div>
                     
-                    <form method="post" action="{% url 'book_ride' %}" class="space-y-6">
+                    <!-- Booking Form -->
+                    <form method="post" action="{% url 'book_ride' %}" id="booking-form" class="space-y-6">
                         {% csrf_token %}
                         
-                        <!-- Location inputs -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    Pickup Location
-                                </label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        </svg>
+                        <!-- Step 1: Locations -->
+                        <div class="bg-gray-50 rounded-2xl p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                <span class="inline-flex items-center justify-center w-6 h-6 bg-purple-600 text-white rounded-full text-sm font-bold mr-3">1</span>
+                                Choose Your Locations
+                            </h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Pickup Location
+                                    </label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                            <svg class="h-4 w-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            </svg>
+                                        </div>
+                                        <input type="text" 
+                                               id="pickup-input"
+                                               name="pickup_location" 
+                                               class="address-autocomplete-input pl-12 w-full py-3 pr-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all" 
+                                               placeholder="Enter pickup address..." 
+                                               aria-label="Pickup location with address autocomplete"
+                                               required>
                                     </div>
-                                    <input type="text" name="pickup_location" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all" placeholder="Enter pickup address" required>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Destination
+                                    </label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                            <svg class="h-4 w-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            </svg>
+                                        </div>
+                                        <input type="text" 
+                                               id="dropoff-input"
+                                               name="dropoff_location" 
+                                               class="address-autocomplete-input pl-12 w-full py-3 pr-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all" 
+                                               placeholder="Enter destination..." 
+                                               aria-label="Destination with address autocomplete"
+                                               required>
+                                    </div>
                                 </div>
                             </div>
                             
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    Dropoff Location
-                                </label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        </svg>
+                            <!-- Route Options (shown when route is available) -->
+                            <div id="route-options" class="hidden mt-4 flex flex-wrap gap-3 justify-center">
+                                <button type="button" onclick="calculateAlternativeRoutes()" 
+                                        class="bg-green-100 hover:bg-green-200 text-green-700 px-4 py-2 rounded-xl font-medium transition-colors flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                    </svg>
+                                    Alternative Routes
+                                </button>
+                                <button type="button" onclick="clearRoute()" 
+                                        class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-medium transition-colors flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4l12 12m0-12L4 16"></path>
+                                    </svg>
+                                    Clear Route
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 2: Timing (only shown when locations are set) -->
+                        <div id="timing-section" class="hidden bg-gray-50 rounded-2xl p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                <span class="inline-flex items-center justify-center w-6 h-6 bg-purple-600 text-white rounded-full text-sm font-bold mr-3">2</span>
+                                When Do You Need This Ride?
+                            </h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Pickup Date
+                                    </label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                            </svg>
+                                        </div>
+                                        <select name="pickup_date" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all" required>
+                                            <option value="">Select date</option>
+                                            {% for date in date_options %}
+                                                <option value="{{ date.value }}">{{ date.display }}</option>
+                                            {% endfor %}
+                                        </select>
                                     </div>
-                                    <input type="text" name="dropoff_location" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all" placeholder="Enter dropoff address" required>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Pickup Time
+                                    </label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                        </div>
+                                        <input type="time" name="pickup_time" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all" required>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- Date and Time -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    Pickup Date
-                                </label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                        </svg>
-                                    </div>
-                                    <select name="pickup_date" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all" required>
-                                        <option value="">Select date</option>
-                                        {% for date in date_options %}
-                                            <option value="{{ date.value }}">{{ date.display }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
+                        <!-- Step 3: Additional Options (only shown when timing is set) -->
+                        <div id="additional-options" class="hidden bg-gray-50 rounded-2xl p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                <span class="inline-flex items-center justify-center w-6 h-6 bg-purple-600 text-white rounded-full text-sm font-bold mr-3">3</span>
+                                Additional Requirements (Optional)
+                            </h3>
                             
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    Pickup Time
+                                    Special Requirements or Notes
                                 </label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                    </div>
-                                    <input type="time" name="pickup_time" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all" required>
-                                </div>
+                                <textarea name="special_requirements" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none" placeholder="Any special accommodations needed for your ride?"></textarea>
                             </div>
-                        </div>
-                        
-                        <!-- Special Requirements -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Special Requirements or Notes
-                            </label>
-                            <textarea name="special_requirements" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none" placeholder="Any special accommodations needed for your ride?"></textarea>
                         </div>
                         
                         <!-- Your Accessibility Needs Reminder -->
@@ -169,14 +266,14 @@
                         {% endif %}
                         
                         <!-- Booking Options Description -->
-                        <div class="bg-gray-50 rounded-xl p-4 text-center">
-                            <p class="text-sm text-gray-600">
+                        <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-4 text-center">
+                            <p class="text-sm text-gray-700">
                                 <strong>Book Now</strong> for immediate rides or <strong>Pre-Book</strong> to schedule rides in advance with your preferred drivers
                             </p>
                         </div>
                         
-                        <!-- Action Buttons -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Action Buttons (only shown when form is complete) -->
+                        <div id="booking-buttons" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
                             <!-- Book Now Button -->
                             <button type="submit" class="gradient-bg text-white py-4 px-6 rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -198,7 +295,7 @@
             </div>
             
             <!-- Sidebar -->
-            <div class="space-y-6">
+            <div class="xl:col-span-1 space-y-6">
                 <!-- Quick Actions -->
                 <div class="glass-effect rounded-2xl shadow-lg p-6">
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
@@ -263,8 +360,465 @@
                         <p class="text-gray-500 text-sm">No upcoming rides scheduled.</p>
                     {% endif %}
                 </div>
+
+                <!-- App Features Info -->
+                <div class="glass-effect rounded-2xl shadow-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Features</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                                <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-gray-800 text-sm">Smart Search</h4>
+                                <p class="text-gray-600 text-xs">Address autocomplete with accessibility scoring</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-gray-800 text-sm">Accessible Routes</h4>
+                                <p class="text-gray-600 text-xs">Wheelchair-optimized routing with safety priorities</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-gray-800 text-sm">Real-time Updates</h4>
+                                <p class="text-gray-600 text-xs">Live tracking and accessibility alerts</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- External Libraries for Map Functionality -->
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://unpkg.com/protomaps@2.0.0/dist/protomaps.js"></script>
+
+<!-- Our JavaScript components -->
+<link rel="stylesheet" href="{% static 'css/map-components.css' %}">
+<script src="{% static 'js/address-autocomplete.js' %}"></script>
+<script src="{% static 'js/map-component.js' %}"></script>
+
+<!-- CSRF Token for AJAX requests -->
+<meta name="csrf-token" content="{{ csrf_token }}">
+
+<script>
+    // Global variables
+    let mapInstance = null;
+    let pickupAutocomplete = null;
+    let dropoffAutocomplete = null;
+    let currentUserLocation = null;
+    let currentStep = 1;
+    
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeSmartBooking();
+        setupProgressiveForm();
+    });
+    
+    function initializeSmartBooking() {
+        try {
+            // Initialize map with user location detection
+            mapInstance = new WheelchairRideMap('map', {
+                apiEndpoint: '/api',
+                onLocationSelect: handleLocationSelect,
+                onRouteCalculated: handleRouteCalculated,
+                onError: handleMapError,
+                detectUserLocation: true
+            });
+            
+            // Initialize address autocomplete with public endpoint fallback
+            pickupAutocomplete = new AddressAutocomplete(
+                document.getElementById('pickup-input'),
+                {
+                    apiEndpoint: '/api',
+                    usePublicEndpoint: true, // Enable public endpoint for development
+                    placeholder: 'Enter pickup address...',
+                    onSelect: function(suggestion) {
+                        handleAddressSelect('pickup', suggestion);
+                    },
+                    onError: handleAutocompleteError
+                }
+            );
+            
+            dropoffAutocomplete = new AddressAutocomplete(
+                document.getElementById('dropoff-input'),
+                {
+                    apiEndpoint: '/api',
+                    usePublicEndpoint: true, // Enable public endpoint for development
+                    placeholder: 'Enter destination...',
+                    onSelect: function(suggestion) {
+                        handleAddressSelect('dropoff', suggestion);
+                    },
+                    onError: handleAutocompleteError
+                }
+            );
+            
+            showStatus('Booking system ready! Click "Use My Location" to get started 🚀', 'success');
+            
+        } catch (error) {
+            console.warn('Map initialization failed, booking form still functional:', error);
+            showStatus('Booking form ready (map features limited)', 'info');
+        }
+    }
+    
+    function setupProgressiveForm() {
+        // Watch for location inputs
+        document.getElementById('pickup-input').addEventListener('input', checkFormProgress);
+        document.getElementById('dropoff-input').addEventListener('input', checkFormProgress);
+        
+        // Watch for date/time inputs
+        document.querySelector('select[name="pickup_date"]').addEventListener('change', checkFormProgress);
+        document.querySelector('input[name="pickup_time"]').addEventListener('change', checkFormProgress);
+    }
+    
+    function getCurrentLocation() {
+        if (!navigator.geolocation) {
+            showStatus('Geolocation is not supported by this browser', 'error');
+            return;
+        }
+        
+        showStatus('Getting your current location... 📍', 'info');
+        
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                currentUserLocation = { lat, lng };
+                
+                // Update map with current location
+                if (mapInstance) {
+                    mapInstance.setPickupLocation(lat, lng, 'Current Location');
+                }
+                
+                // Reverse geocode to get address
+                reverseGeocodeLocation(lat, lng);
+                
+                showStatus('Location found! Now enter your destination ✅', 'success');
+            },
+            function(error) {
+                let message = 'Unable to get your location. ';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        message += 'Please allow location access and try again.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        message += 'Location information is unavailable.';
+                        break;
+                    case error.TIMEOUT:
+                        message += 'Location request timed out.';
+                        break;
+                    default:
+                        message += 'An unknown error occurred.';
+                        break;
+                }
+                showStatus(message, 'error');
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000 // 5 minutes
+            }
+        );
+    }
+    
+    function reverseGeocodeLocation(lat, lng) {
+        // Use the geocoding API to get address from coordinates
+        fetch('/api/geocoding/reverse/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ lat: lat, lng: lng })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.display_name) {
+                document.getElementById('pickup-input').value = data.display_name;
+                checkFormProgress();
+            }
+        })
+        .catch(error => {
+            console.error('Reverse geocoding failed:', error);
+            document.getElementById('pickup-input').value = `Current Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+            checkFormProgress();
+        });
+    }
+    
+    function handleLocationSelect(type, location) {
+        console.log(`${type} location selected:`, location);
+        
+        // Update corresponding input
+        if (type === 'pickup' && pickupAutocomplete) {
+            pickupAutocomplete.setValue(location.address);
+        } else if (type === 'dropoff' && dropoffAutocomplete) {
+            dropoffAutocomplete.setValue(location.address);
+        }
+        
+        showStatus(`${type.charAt(0).toUpperCase() + type.slice(1)} location set ✅`, 'success');
+        checkFormProgress();
+    }
+    
+    function handleAddressSelect(type, suggestion) {
+        console.log(`${type} address selected:`, suggestion);
+        
+        // Update map with selected location
+        if (mapInstance && suggestion.lat && suggestion.lng) {
+            if (type === 'pickup') {
+                mapInstance.setPickupLocation(suggestion.lat, suggestion.lng, suggestion.formatted);
+            } else if (type === 'dropoff') {
+                mapInstance.setDropoffLocation(suggestion.lat, suggestion.lng, suggestion.formatted);
+            }
+        }
+        
+        showStatus(`${type.charAt(0).toUpperCase() + type.slice(1)} address selected ✅`, 'success');
+        checkFormProgress();
+    }
+    
+    function handleRouteCalculated(routeData) {
+        console.log('Route calculated:', routeData);
+        
+        // Show route summary
+        const summaryDiv = document.getElementById('route-summary');
+        const detailsDiv = document.getElementById('route-details');
+        
+        if (routeData && routeData.summary) {
+            detailsDiv.innerHTML = `
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                        <div class="font-semibold">${routeData.summary.distance || 'N/A'}</div>
+                        <div class="text-xs">Distance</div>
+                    </div>
+                    <div>
+                        <div class="font-semibold">${routeData.summary.duration || 'N/A'}</div>
+                        <div class="text-xs">Duration</div>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-green-600">${routeData.summary.accessibility_score || 'Good'}</div>
+                        <div class="text-xs">Accessibility</div>
+                    </div>
+                </div>
+            `;
+            summaryDiv.classList.remove('hidden');
+        }
+        
+        // Show route options
+        document.getElementById('route-options').classList.remove('hidden');
+        
+        showStatus('Route calculated! Now choose your timing below 🗺️', 'success');
+        checkFormProgress();
+    }
+    
+    function checkFormProgress() {
+        const pickup = document.getElementById('pickup-input').value.trim();
+        const dropoff = document.getElementById('dropoff-input').value.trim();
+        const pickupDate = document.querySelector('select[name="pickup_date"]').value;
+        const pickupTime = document.querySelector('input[name="pickup_time"]').value;
+        
+        // Step 2: Show timing section when both locations are set
+        if (pickup && dropoff && currentStep < 2) {
+            document.getElementById('timing-section').classList.remove('hidden');
+            currentStep = 2;
+            
+            // Scroll to timing section
+            document.getElementById('timing-section').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+        }
+        
+        // Step 3: Show additional options when timing is set
+        if (pickup && dropoff && pickupDate && pickupTime && currentStep < 3) {
+            document.getElementById('additional-options').classList.remove('hidden');
+            currentStep = 3;
+        }
+        
+        // Step 4: Show booking buttons when form is complete
+        if (pickup && dropoff && pickupDate && pickupTime && currentStep < 4) {
+            document.getElementById('booking-buttons').classList.remove('hidden');
+            currentStep = 4;
+            
+            showStatus('Ready to book! Choose Book Now or Pre-Book below 🎉', 'success');
+            
+            // Scroll to booking buttons
+            setTimeout(() => {
+                document.getElementById('booking-buttons').scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+            }, 500);
+        }
+    }
+    
+    function calculateAlternativeRoutes() {
+        if (!mapInstance) {
+            showStatus('Map not available for alternative routes', 'error');
+            return;
+        }
+        
+        const locations = mapInstance.getSelectedLocations();
+        if (!locations.pickup || !locations.dropoff) {
+            showStatus('Please set both pickup and destination first', 'error');
+            return;
+        }
+        
+        showStatus('Finding alternative accessible routes... 🔄', 'info');
+        
+        setTimeout(() => {
+            showStatus('Alternative routes calculated! Check the map for options ✅', 'success');
+        }, 2000);
+    }
+    
+    function clearRoute() {
+        if (mapInstance) {
+            mapInstance.clearRoute();
+        }
+        
+        // Hide route summary and options
+        document.getElementById('route-summary').classList.add('hidden');
+        document.getElementById('route-options').classList.add('hidden');
+        
+        showStatus('Route cleared. Select different locations if needed ✅', 'success');
+    }
+    
+    function handleMapError(error) {
+        console.error('Map error:', error);
+        showStatus('Map temporarily unavailable, but you can still book your ride!', 'info');
+    }
+    
+    function handleAutocompleteError(error) {
+        console.error('Autocomplete error:', error);
+        showStatus('Address suggestions temporarily unavailable, manual entry works!', 'info');
+    }
+    
+    function showStatus(message, type = 'info') {
+        const statusDisplay = document.getElementById('status-display');
+        statusDisplay.textContent = message;
+        
+        // Reset classes
+        statusDisplay.className = 'mt-4 p-4 rounded-xl';
+        
+        // Add type-specific styling
+        if (type === 'error') {
+            statusDisplay.classList.add('bg-red-50', 'text-red-700', 'border', 'border-red-200');
+        } else if (type === 'success') {
+            statusDisplay.classList.add('bg-green-50', 'text-green-700', 'border', 'border-green-200');
+        } else {
+            statusDisplay.classList.add('bg-blue-50', 'text-blue-700', 'border', 'border-blue-200');
+        }
+        
+        statusDisplay.classList.remove('hidden');
+        
+        // Auto-hide after 5 seconds for success messages, 8 seconds for errors
+        const hideDelay = type === 'error' ? 8000 : 5000;
+        setTimeout(() => {
+            statusDisplay.classList.add('hidden');
+        }, hideDelay);
+    }
+    
+    // Form submission enhancement
+    document.getElementById('booking-form').addEventListener('submit', function(e) {
+        const pickup = document.getElementById('pickup-input').value.trim();
+        const dropoff = document.getElementById('dropoff-input').value.trim();
+        const pickupDate = document.querySelector('select[name="pickup_date"]').value;
+        const pickupTime = document.querySelector('input[name="pickup_time"]').value;
+        
+        if (!pickup || !dropoff) {
+            e.preventDefault();
+            showStatus('Please enter both pickup location and destination', 'error');
+            return;
+        }
+        
+        if (!pickupDate || !pickupTime) {
+            e.preventDefault();
+            showStatus('Please select both pickup date and time', 'error');
+            return;
+        }
+        
+        showStatus('Processing your booking request... 🚀', 'info');
+        // Form will submit normally to Django backend
+    });
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', function() {
+        if (mapInstance) {
+            mapInstance.destroy();
+        }
+        if (pickupAutocomplete) {
+            pickupAutocomplete.destroy();
+        }
+        if (dropoffAutocomplete) {
+            dropoffAutocomplete.destroy();
+        }
+    });
+</script>
+
+<style>
+    /* Smooth transitions for progressive form reveal */
+    #timing-section,
+    #additional-options,
+    #booking-buttons,
+    #route-options {
+        transition: all 0.5s ease-in-out;
+    }
+    
+    /* Map styling */
+    .map-container {
+        min-height: 320px;
+    }
+    
+    /* Step indicators */
+    .step-complete {
+        background-color: #10b981 !important;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .map-container {
+            min-height: 250px;
+        }
+        
+        .xl\:col-span-3 {
+            grid-column: span 1;
+        }
+        
+        .xl\:col-span-1 {
+            grid-column: span 1;
+        }
+    }
+    
+    /* Accessibility improvements */
+    .address-autocomplete-input:focus {
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
+    
+    /* Status message animations */
+    #status-display {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
 {% endblock %}

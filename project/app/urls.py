@@ -3,6 +3,7 @@ URL configuration for RideConnect app including pre-booked rides.
 """
 
 from django.urls import path, include
+from django.shortcuts import render
 from rest_framework.routers import DefaultRouter
 from . import views
 from .views_package import *  # Import all views including pre-booking views
@@ -88,5 +89,6 @@ urlpatterns = [
     path('ajax/check-availability/', ajax_check_availability, name='ajax_check_availability'),
     
     # API endpoints
-    path('api/', include(router.urls)),
+    path('api/', include('app.api.urls')),
+    
 ]
