@@ -38,6 +38,7 @@ from .driver_status_views import (
     toggle_driver_status,
     update_driver_location,
     driver_live_offers,
+    accept_immediate_ride,
 )
 
 __all__ = [
@@ -97,4 +98,5 @@ __all__ = [
     'toggle_driver_status',
     'update_driver_location',
     'driver_live_offers',
+    'accept_immediate_ride',
 ]

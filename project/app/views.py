@@ -14,8 +14,11 @@ from django.conf import settings
 from django.urls import reverse
 from datetime import datetime, timedelta
 import json
+import logging
 import os
 import secrets
+
+logger = logging.getLogger(__name__)
 from .forms import (
     RiderRegistrationForm, EmailAuthenticationForm, DriverBasicInfoForm,
     DriverEligibilityForm, DriverProfessionalInfoForm, DriverDocumentUploadForm,
@@ -112,11 +115,55 @@ def home(request):
         # If user doesn't have a rider profile, create one
         rider = Rider.objects.create(user=request.user)
     
-    # Get upcoming rides
-    upcoming_rides = rider.rides.filter(
+    # Get upcoming rides with fare estimates
+    upcoming_rides_queryset = rider.rides.filter(
         pickup_datetime__gte=timezone.now(),
         status__in=['pending', 'confirmed']
     ).order_by('pickup_datetime')[:5]
+    
+    # Calculate fare estimates for upcoming rides
+    upcoming_rides = []
+    for ride in upcoming_rides_queryset:
+        ride_data = {
+            'ride': ride,
+            'distance_km': 0.0,
+            'estimated_fare': None,
+        }
+        
+        try:
+            from .services.geocoding_service import GeocodingService
+            from .services.pricing_service import PricingService
+            
+            geocoding_service = GeocodingService()
+            pricing_service = PricingService()
+            
+            # Calculate distance and fare
+            pickup_coords = geocoding_service.geocode(ride.pickup_location)
+            dropoff_coords = geocoding_service.geocode(ride.dropoff_location)
+            
+            if pickup_coords and dropoff_coords:
+                distance_km = geocoding_service._calculate_distance(
+                    pickup_coords['lat'], pickup_coords['lng'],
+                    dropoff_coords['lat'], dropoff_coords['lng']
+                )
+                
+                # Check if wheelchair is required
+                wheelchair_required = any('wheelchair' in disability.lower() 
+                                        for disability in rider.disabilities) if rider.disabilities else False
+                
+                # Calculate fare
+                estimated_fare = pricing_service.calculate_immediate_fare(
+                    distance_km=distance_km,
+                    wheelchair_required=wheelchair_required
+                )
+                
+                ride_data['distance_km'] = round(distance_km, 1)
+                ride_data['estimated_fare'] = estimated_fare
+                
+        except Exception as e:
+            logger.warning(f"Error calculating fare for ride {ride.id}: {e}")
+        
+        upcoming_rides.append(ride_data)
     
     # Get ride history
     past_rides = rider.rides.filter(
@@ -159,6 +206,41 @@ def book_ride(request):
             pickup_datetime = datetime.strptime(f"{pickup_date} {pickup_time}", '%Y-%m-%d %H:%M')
             pickup_datetime = timezone.make_aware(pickup_datetime)
             
+            # Calculate estimated fare and distance
+            estimated_fare = None
+            distance_km = 0.0
+            
+            try:
+                from .services.geocoding_service import GeocodingService
+                from .services.pricing_service import PricingService
+                
+                geocoding_service = GeocodingService()
+                pricing_service = PricingService()
+                
+                # Geocode locations
+                pickup_coords = geocoding_service.geocode(pickup_location)
+                dropoff_coords = geocoding_service.geocode(dropoff_location)
+                
+                if pickup_coords and dropoff_coords:
+                    # Calculate distance
+                    distance_km = geocoding_service._calculate_distance(
+                        pickup_coords['lat'], pickup_coords['lng'],
+                        dropoff_coords['lat'], dropoff_coords['lng']
+                    )
+                    
+                    # Check if wheelchair is required
+                    wheelchair_required = any('wheelchair' in disability.lower() 
+                                            for disability in rider.disabilities) if rider.disabilities else False
+                    
+                    # Calculate fare
+                    estimated_fare = pricing_service.calculate_immediate_fare(
+                        distance_km=distance_km,
+                        wheelchair_required=wheelchair_required
+                    )
+                    
+            except Exception as e:
+                logger.warning(f"Error calculating fare for new ride: {e}")
+            
             # Create the ride
             ride = Ride.objects.create(
                 rider=rider,
@@ -168,7 +250,21 @@ def book_ride(request):
                 special_requirements=special_requirements
             )
             
-            messages.success(request, 'Your ride has been booked successfully!')
+            # Broadcast the new ride to available drivers
+            try:
+                from .services.notification_service import NotificationService
+                notification_service = NotificationService()
+                notification_service.broadcast_immediate_ride_to_drivers(ride)
+                logger.info(f"Broadcasted immediate ride {ride.id} to available drivers")
+            except Exception as e:
+                logger.error(f"Error broadcasting ride {ride.id} to drivers: {e}")
+            
+            # Add fare info to success message if calculated
+            success_message = 'Your ride has been booked successfully!'
+            if estimated_fare and distance_km:
+                success_message += f' Estimated fare: €{estimated_fare} for {distance_km:.1f}km.'
+            
+            messages.success(request, success_message)
             return redirect('home')
             
         except Exception as e:

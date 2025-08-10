@@ -80,6 +80,7 @@ urlpatterns = [
     path('driver/toggle-status/', toggle_driver_status, name='toggle_driver_status'),
     path('driver/update-location/', update_driver_location, name='update_driver_location'),
     path('driver/live-offers/', driver_live_offers, name='driver_live_offers'),
+    path('driver/accept-immediate-ride/<int:ride_id>/', accept_immediate_ride, name='accept_immediate_ride'),
     
     # AJAX endpoints
     path('ajax/upload-document/', views.ajax_upload_document, name='ajax_upload_document'),

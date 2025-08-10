@@ -60,11 +60,50 @@ def pre_book_ride(request):
                     pickup_window_minutes=form.cleaned_data.get('pickup_window_minutes', 15)
                 )
                 
-                messages.success(
-                    request,
-                    f"Your ride has been scheduled for {booking.pickup_datetime.strftime('%B %d at %I:%M %p')}. "
-                    "We'll match you with a driver soon."
-                )
+                # Broadcast the pre-booked ride to available drivers
+                try:
+                    from ..services.matching_service import MatchingService
+                    from ..services.notification_service import NotificationService
+                    
+                    matching_service = MatchingService()
+                    notification_service = NotificationService()
+                    
+                    # Find best driver matches for this booking
+                    matches = matching_service.find_best_matches(booking, max_offers=5)
+                    
+                    if matches:
+                        # Create offers for top matches
+                        offers = matching_service.create_match_offers(
+                            booking,
+                            matches,
+                            offer_duration_hours=24  # Pre-booked offers last longer
+                        )
+                        
+                        # Notify each matched driver
+                        for offer in offers:
+                            notification_service.notify_driver_new_offer(offer.driver, offer)
+                        
+                        logger.info(f"Created {len(offers)} offers for pre-booked ride {booking.id}")
+                        
+                        messages.success(
+                            request,
+                            f"Your ride has been scheduled for {booking.pickup_datetime.strftime('%B %d at %I:%M %p')}. "
+                            f"We've notified {len(offers)} nearby drivers!"
+                        )
+                    else:
+                        messages.success(
+                            request,
+                            f"Your ride has been scheduled for {booking.pickup_datetime.strftime('%B %d at %I:%M %p')}. "
+                            "We'll match you with a driver soon."
+                        )
+                        
+                except Exception as e:
+                    logger.error(f"Error matching/broadcasting booking {booking.id}: {e}")
+                    messages.success(
+                        request,
+                        f"Your ride has been scheduled for {booking.pickup_datetime.strftime('%B %d at %I:%M %p')}. "
+                        "We'll match you with a driver soon."
+                    )
                 
                 # Redirect to driver selection if immediate matching
                 if form.cleaned_data.get('immediate_matching'):

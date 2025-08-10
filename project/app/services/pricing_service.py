@@ -292,3 +292,42 @@ class PricingService:
             'max_fare': max_fare,
             'estimated_fare': base_fare,
         }
+    
+    def calculate_immediate_fare(
+        self,
+        distance_km: float,
+        duration_minutes: int = None,
+        wheelchair_required: bool = False,
+        priority: str = 'urgent'  # Immediate rides are typically urgent
+    ) -> Decimal:
+        """
+        Calculate fare for immediate rides (no pre-booking fee).
+        
+        Args:
+            distance_km: Distance in kilometers
+            duration_minutes: Estimated duration in minutes (estimated if None)
+            wheelchair_required: Whether wheelchair access is needed
+            priority: Priority level ('normal', 'high', 'urgent')
+            
+        Returns:
+            Total estimated fare
+        """
+        # Estimate duration if not provided (average speed ~30 km/h in city)
+        if duration_minutes is None:
+            duration_minutes = max(5, int(distance_km * 2.5))  # Minimum 5 minutes
+        
+        # Base calculation (no pre-booking fee for immediate rides)
+        distance_fare = Decimal(str(distance_km)) * self.DISTANCE_RATE_PER_KM
+        time_fare = Decimal(str(duration_minutes)) * self.TIME_RATE_PER_MIN
+        
+        subtotal = self.BASE_FARE + distance_fare + time_fare
+        
+        # Add accessibility surcharge if needed
+        if wheelchair_required:
+            subtotal += self.WHEELCHAIR_SURCHARGE
+        
+        # Apply priority multiplier (immediate rides often have higher priority)
+        priority_multiplier = self.PRIORITY_MULTIPLIERS.get(priority, Decimal('1.3'))
+        subtotal *= priority_multiplier
+        
+        return self._round_fare(subtotal)

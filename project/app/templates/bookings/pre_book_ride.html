@@ -3,35 +3,70 @@
 
 {% block title %}Pre-Book a Ride{% endblock %}
 
-{% block extra_css %}
-<style>
-    .fare-estimate {
-        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-        border: 2px solid #9333ea;
-    }
-    .round-trip-section {
-        background-color: #faf5ff;
-        border: 1px solid #e9d5ff;
-    }
-    .medical-facility {
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-    .medical-facility:hover {
-        background-color: #f3e8ff;
-        transform: translateX(4px);
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-8">
-    <div class="container mx-auto px-4">
+<div class="min-h-screen relative overflow-hidden">
+    <!-- Animated background elements -->
+    <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-50 float-animation"></div>
+        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-50 float-animation" style="animation-delay: 2s;"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-50 float-animation" style="animation-delay: 4s;"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="relative z-20 glass-effect border-b border-white/20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <div class="inline-flex items-center justify-center w-10 h-10 bg-white rounded-full shadow">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <h1 class="text-2xl font-display font-bold gradient-text">RideConnect</h1>
+                </div>
+                
+                <nav class="flex items-center space-x-6">
+                    <a href="{% url 'home' %}" class="text-gray-600 hover:text-purple-600 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                    </a>
+                    <span class="text-gray-700">
+                        {{ user.username }} 
+                        <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full ml-2">Rider</span>
+                    </span>
+                    <a href="{% url 'logout' %}" class="text-gray-600 hover:text-purple-600 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3-3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-4 p-4 rounded-xl {% if message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200{% elif message.tags == 'success' %}bg-green-50 text-green-700 border border-green-200{% else %}bg-blue-50 text-blue-700 border border-blue-200{% endif %}">
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div>
+                            {{ message }}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+
         <div class="max-w-4xl mx-auto">
             <!-- Header -->
-            <div class="mb-8">
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">Pre-Book Your Ride</h1>
-                <p class="text-gray-600">Schedule your ride in advance for peace of mind</p>
+            <div class="mb-8 text-center">
+                <h1 class="text-4xl font-display font-bold gradient-text mb-4">Pre-Book Your Ride</h1>
+                <p class="text-xl text-gray-600">Schedule your ride in advance for peace of mind</p>
             </div>
 
             <form method="post" id="preBookForm" class="space-y-6">
@@ -41,13 +76,13 @@
                     <!-- Left Column -->
                     <div class="space-y-6">
                         <!-- Ride Type Card -->
-                        <div class="bg-white rounded-xl shadow-lg p-6">
-                            <h2 class="text-xl font-semibold text-gray-900 mb-4">Ride Details</h2>
+                        <div class="glass-effect border border-white/20 rounded-xl p-6">
+                            <h2 class="text-xl font-semibold gradient-text mb-4">Ride Details</h2>
                             
                             <!-- Purpose -->
                             <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Purpose of Trip</label>
-                                <select name="purpose" class="w-full rounded-lg border-gray-300 focus:border-purple-500 focus:ring-purple-500">
+                                <label class="block text-sm font-medium text-white mb-2">Purpose of Trip</label>
+                                <select name="purpose" class="w-full glass-input rounded-lg border-white/20 bg-white/10 text-white placeholder-white/60 focus:border-purple-400 focus:ring-purple-400">
                                     <option value="other">General</option>
                                     <option value="medical" {% if request.GET.medical %}selected{% endif %}>Medical Appointment</option>
                                     <option value="therapy">Therapy Session</option>
@@ -60,22 +95,22 @@
                             <!-- Date & Time -->
                             <div class="grid grid-cols-2 gap-4 mb-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Pickup Date</label>
-                                    {{ form.pickup_date }}
+                                    <label class="block text-sm font-medium text-white mb-2">Pickup Date</label>
+                                    {{ form.scheduled_pickup_date }}
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Pickup Time</label>
-                                    {{ form.pickup_time }}
+                                    <label class="block text-sm font-medium text-white mb-2">Pickup Time</label>
+                                    {{ form.scheduled_pickup_time }}
                                 </div>
                             </div>
 
                             <!-- Pickup Window -->
                             <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <label class="block text-sm font-medium text-white mb-2">
                                     Pickup Window
-                                    <span class="text-xs text-gray-500">(flexibility helps with matching)</span>
+                                    <span class="text-xs text-white/60">(flexibility helps with matching)</span>
                                 </label>
-                                <select name="pickup_window_minutes" class="w-full rounded-lg border-gray-300">
+                                <select name="pickup_window_minutes" class="w-full glass-input rounded-lg border-white/20 bg-white/10 text-white placeholder-white/60 focus:border-purple-400 focus:ring-purple-400">
                                     <option value="15">±15 minutes</option>
                                     <option value="30">±30 minutes</option>
                                     <option value="45">±45 minutes</option>
@@ -84,9 +119,9 @@
                             </div>
 
                             <!-- Round Trip Toggle -->
-                            <div class="round-trip-section rounded-lg p-4">
+                            <div class="round-trip-section rounded-lg p-4 bg-white/5 border border-white/10">
                                 <div class="flex items-center justify-between mb-3">
-                                    <label class="text-sm font-medium text-gray-700">Round Trip?</label>
+                                    <label class="text-sm font-medium text-white">Round Trip?</label>
                                     <label class="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" name="is_round_trip" id="roundTripToggle" class="sr-only peer">
                                         <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
@@ -95,19 +130,19 @@
                                 
                                 <div id="roundTripOptions" class="hidden space-y-3">
                                     <div>
-                                        <label class="block text-xs font-medium text-gray-600 mb-1">Return Time</label>
+                                        <label class="block text-xs font-medium text-white/80 mb-1">Return Time</label>
                                         <div class="flex items-center space-x-2">
-                                            <input type="time" name="return_time" class="flex-1 rounded-lg border-gray-300 text-sm">
-                                            <span class="text-xs text-gray-500">or</span>
+                                            <input type="time" name="return_time" class="flex-1 glass-input rounded-lg border-white/20 bg-white/10 text-white text-sm">
+                                            <span class="text-xs text-white/60">or</span>
                                             <label class="flex items-center">
-                                                <input type="checkbox" name="flexible_return" class="rounded text-purple-600 mr-1">
-                                                <span class="text-xs">Flexible</span>
+                                                <input type="checkbox" name="flexible_return" class="rounded text-purple-400 mr-1">
+                                                <span class="text-xs text-white/80">Flexible</span>
                                             </label>
                                         </div>
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-medium text-gray-600 mb-1">Estimated Wait Time</label>
-                                        <select name="waiting_duration_minutes" class="w-full rounded-lg border-gray-300 text-sm">
+                                        <label class="block text-xs font-medium text-white/80 mb-1">Estimated Wait Time</label>
+                                        <select name="waiting_duration_minutes" class="w-full glass-input rounded-lg border-white/20 bg-white/10 text-white text-sm">
                                             <option value="30">30 minutes</option>
                                             <option value="60">1 hour</option>
                                             <option value="90">1.5 hours</option>
@@ -121,8 +156,8 @@
 
                             <!-- Priority -->
                             <div class="mt-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
-                                <select name="priority" class="w-full rounded-lg border-gray-300">
+                                <label class="block text-sm font-medium text-white mb-2">Priority</label>
+                                <select name="priority" class="w-full glass-input rounded-lg border-white/20 bg-white/10 text-white placeholder-white/60 focus:border-purple-400 focus:ring-purple-400">
                                     <option value="normal">Normal</option>
                                     <option value="high">High (+15% fare)</option>
                                     <option value="urgent">Urgent (+30% fare)</option>
@@ -131,33 +166,33 @@
                         </div>
 
                         <!-- Accessibility Requirements -->
-                        <div class="bg-white rounded-xl shadow-lg p-6">
-                            <h2 class="text-xl font-semibold text-gray-900 mb-4">Accessibility Needs</h2>
+                        <div class="glass-effect border border-white/20 rounded-xl p-6">
+                            <h2 class="text-xl font-semibold gradient-text mb-4">Accessibility Needs</h2>
                             
                             <div class="space-y-3">
                                 <label class="flex items-center">
-                                    <input type="checkbox" name="wheelchair_required" class="rounded text-purple-600 mr-3">
-                                    <span class="text-gray-700">Wheelchair accessible vehicle required</span>
+                                    <input type="checkbox" name="wheelchair_required" class="rounded text-purple-400 mr-3">
+                                    <span class="text-white">Wheelchair accessible vehicle required</span>
                                 </label>
                                 
                                 <div class="ml-6 space-y-2">
                                     <label class="flex items-center">
-                                        <input type="checkbox" name="assistance_required" value="boarding" class="rounded text-purple-600 mr-2">
-                                        <span class="text-sm text-gray-600">Boarding assistance</span>
+                                        <input type="checkbox" name="assistance_required" value="boarding" class="rounded text-purple-400 mr-2">
+                                        <span class="text-sm text-white/80">Boarding assistance</span>
                                     </label>
                                     <label class="flex items-center">
-                                        <input type="checkbox" name="assistance_required" value="wheelchair_loading" class="rounded text-purple-600 mr-2">
-                                        <span class="text-sm text-gray-600">Wheelchair loading</span>
+                                        <input type="checkbox" name="assistance_required" value="wheelchair_loading" class="rounded text-purple-400 mr-2">
+                                        <span class="text-sm text-white/80">Wheelchair loading</span>
                                     </label>
                                     <label class="flex items-center">
-                                        <input type="checkbox" name="assistance_required" value="door_to_door" class="rounded text-purple-600 mr-2">
-                                        <span class="text-sm text-gray-600">Door-to-door assistance</span>
+                                        <input type="checkbox" name="assistance_required" value="door_to_door" class="rounded text-purple-400 mr-2">
+                                        <span class="text-sm text-white/80">Door-to-door assistance</span>
                                     </label>
                                 </div>
                             </div>
                             
                             <div class="mt-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Special Requirements</label>
+                                <label class="block text-sm font-medium text-white mb-2">Special Requirements</label>
                                 {{ form.special_requirements }}
                             </div>
                         </div>
@@ -166,29 +201,29 @@
                     <!-- Right Column -->
                     <div class="space-y-6">
                         <!-- Location Selection -->
-                        <div class="bg-white rounded-xl shadow-lg p-6">
-                            <h2 class="text-xl font-semibold text-gray-900 mb-4">Locations</h2>
+                        <div class="glass-effect border border-white/20 rounded-xl p-6">
+                            <h2 class="text-xl font-semibold gradient-text mb-4">Locations</h2>
                             
                             <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Pickup Location</label>
+                                <label class="block text-sm font-medium text-white mb-2">Pickup Location</label>
                                 {{ form.pickup_location }}
                                 <div id="pickupSuggestions" class="mt-2 hidden">
-                                    <p class="text-xs text-gray-500 mb-1">Quick select:</p>
+                                    <p class="text-xs text-white/60 mb-1">Quick select:</p>
                                     <div class="space-y-1" id="pickupQuickSelect"></div>
                                 </div>
                             </div>
                             
                             <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Dropoff Location</label>
+                                <label class="block text-sm font-medium text-white mb-2">Dropoff Location</label>
                                 {{ form.dropoff_location }}
                                 <div id="dropoffSuggestions" class="mt-2 hidden">
-                                    <p class="text-xs text-gray-500 mb-1">Medical facilities nearby:</p>
+                                    <p class="text-xs text-white/60 mb-1">Medical facilities nearby:</p>
                                     <div class="space-y-1" id="medicalFacilities">
                                         {% for facility in medical_facilities %}
-                                        <div class="medical-facility p-2 rounded-lg border border-gray-200 text-sm" 
+                                        <div class="medical-facility p-2 rounded-lg border border-white/20 bg-white/5 text-sm cursor-pointer hover:bg-white/10 transition-colors" 
                                              data-address="{{ facility.address }}">
-                                            <div class="font-medium text-purple-700">{{ facility.name }}</div>
-                                            <div class="text-xs text-gray-500">{{ facility.distance_km }} km away</div>
+                                            <div class="font-medium text-purple-300">{{ facility.name }}</div>
+                                            <div class="text-xs text-white/60">{{ facility.distance_km }} km away</div>
                                         </div>
                                         {% endfor %}
                                     </div>
@@ -196,60 +231,60 @@
                             </div>
                             
                             <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Estimated Duration</label>
+                                <label class="block text-sm font-medium text-white mb-2">Estimated Duration</label>
                                 {{ form.estimated_duration_minutes }}
-                                <p class="text-xs text-gray-500 mt-1">Helps us match the right driver</p>
+                                <p class="text-xs text-white/60 mt-1">Helps us match the right driver</p>
                             </div>
                         </div>
 
                         <!-- Fare Estimate -->
-                        <div class="fare-estimate rounded-xl p-6 hidden" id="fareEstimate">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Fare Estimate</h3>
+                        <div class="fare-estimate glass-effect border border-white/20 rounded-xl p-6 hidden" id="fareEstimate">
+                            <h3 class="text-lg font-semibold gradient-text mb-4">Fare Estimate</h3>
                             
                             <div class="space-y-3">
                                 <div class="flex justify-between items-center">
-                                    <span class="text-gray-600">Distance</span>
-                                    <span class="font-medium" id="estimatedDistance">-- km</span>
+                                    <span class="text-white/80">Distance</span>
+                                    <span class="font-medium text-white" id="estimatedDistance">-- km</span>
                                 </div>
                                 <div class="flex justify-between items-center">
-                                    <span class="text-gray-600">Duration</span>
-                                    <span class="font-medium" id="estimatedDuration">-- min</span>
+                                    <span class="text-white/80">Duration</span>
+                                    <span class="font-medium text-white" id="estimatedDuration">-- min</span>
                                 </div>
-                                <div class="border-t pt-3">
+                                <div class="border-t border-white/20 pt-3">
                                     <div class="flex justify-between items-center">
-                                        <span class="text-gray-600">Base Fare</span>
-                                        <span class="font-medium">€<span id="baseFare">--</span></span>
+                                        <span class="text-white/80">Base Fare</span>
+                                        <span class="font-medium text-white">€<span id="baseFare">--</span></span>
                                     </div>
                                     <div class="flex justify-between items-center" id="roundTripDiscount" style="display: none;">
-                                        <span class="text-green-600">Round Trip Discount</span>
-                                        <span class="font-medium text-green-600">-10%</span>
+                                        <span class="text-green-400">Round Trip Discount</span>
+                                        <span class="font-medium text-green-400">-10%</span>
                                     </div>
                                     <div class="flex justify-between items-center" id="prioritySurcharge" style="display: none;">
-                                        <span class="text-orange-600">Priority Surcharge</span>
-                                        <span class="font-medium text-orange-600">+<span id="surchargePercent">0</span>%</span>
+                                        <span class="text-orange-400">Priority Surcharge</span>
+                                        <span class="font-medium text-orange-400">+<span id="surchargePercent">0</span>%</span>
                                     </div>
                                 </div>
-                                <div class="border-t pt-3">
+                                <div class="border-t border-white/20 pt-3">
                                     <div class="flex justify-between items-center text-lg font-bold">
-                                        <span>Total Estimate</span>
-                                        <span class="text-purple-600">€<span id="totalFare">--</span></span>
+                                        <span class="text-white">Total Estimate</span>
+                                        <span class="text-purple-300">€<span id="totalFare">--</span></span>
                                     </div>
-                                    <p class="text-xs text-gray-500 mt-1">*Final fare may vary based on actual route</p>
+                                    <p class="text-xs text-white/60 mt-1">*Final fare may vary based on actual route</p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Recent Locations -->
                         {% if recent_locations %}
-                        <div class="bg-gray-50 rounded-xl p-6">
-                            <h3 class="text-sm font-medium text-gray-700 mb-3">Recent Locations</h3>
+                        <div class="glass-effect border border-white/20 rounded-xl p-6">
+                            <h3 class="text-sm font-medium text-white mb-3">Recent Locations</h3>
                             <div class="space-y-2">
                                 {% for pickup, dropoff in recent_locations %}
-                                <button type="button" class="w-full text-left p-2 rounded-lg hover:bg-white transition-colors recent-location"
+                                <button type="button" class="w-full text-left p-2 rounded-lg hover:bg-white/10 transition-colors recent-location"
                                         data-pickup="{{ pickup }}" data-dropoff="{{ dropoff }}">
                                     <div class="text-sm">
-                                        <div class="text-gray-600">From: {{ pickup|truncatechars:30 }}</div>
-                                        <div class="text-gray-600">To: {{ dropoff|truncatechars:30 }}</div>
+                                        <div class="text-white/80">From: {{ pickup|truncatechars:30 }}</div>
+                                        <div class="text-white/80">To: {{ dropoff|truncatechars:30 }}</div>
                                     </div>
                                 </button>
                                 {% endfor %}
@@ -260,19 +295,19 @@
                 </div>
 
                 <!-- Form Actions -->
-                <div class="bg-white rounded-xl shadow-lg p-6 mt-6">
+                <div class="glass-effect border border-white/20 rounded-xl p-6 mt-6">
                     <div class="flex items-center justify-between">
                         <div>
                             <label class="flex items-center">
-                                <input type="checkbox" name="immediate_matching" class="rounded text-purple-600 mr-2">
-                                <span class="text-gray-700">Show me available drivers immediately</span>
+                                <input type="checkbox" name="immediate_matching" class="rounded text-purple-400 mr-2">
+                                <span class="text-white">Show me available drivers immediately</span>
                             </label>
                         </div>
                         <div class="space-x-4">
-                            <a href="{% url 'home' %}" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                            <a href="{% url 'home' %}" class="px-6 py-3 border border-white/30 rounded-lg text-white hover:bg-white/10 transition-colors">
                                 Cancel
                             </a>
-                            <button type="submit" class="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                            <button type="submit" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl">
                                 Book Ride
                             </button>
                         </div>

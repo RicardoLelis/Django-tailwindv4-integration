@@ -31,6 +31,22 @@
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
         }
+        .glass-input {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .glass-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(167, 139, 250, 0.4);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+        }
+        .glass-input option {
+            background: rgba(30, 41, 59, 0.95);
+            color: white;
+        }
         @keyframes float {
             0% { transform: translateY(0px); }
             50% { transform: translateY(-20px); }

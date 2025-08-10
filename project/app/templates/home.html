@@ -333,25 +333,38 @@
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">Upcoming Rides</h3>
                     {% if upcoming_rides %}
                         <div class="space-y-3">
-                            {% for ride in upcoming_rides %}
+                            {% for ride_data in upcoming_rides %}
                                 <div class="p-3 bg-gray-50 rounded-xl">
-                                    <div class="text-sm font-medium text-gray-800">{{ ride.pickup_datetime|date:"M d, g:i A" }}</div>
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div class="text-sm font-medium text-gray-800">{{ ride_data.ride.pickup_datetime|date:"M d, g:i A" }}</div>
+                                        {% if ride_data.estimated_fare %}
+                                            <div class="text-sm font-bold text-green-600">€{{ ride_data.estimated_fare }}</div>
+                                        {% endif %}
+                                    </div>
                                     <div class="text-xs text-gray-600 mt-1">
                                         <div class="flex items-center">
                                             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
                                             </svg>
-                                            {{ ride.pickup_location|truncatechars:25 }}
+                                            {{ ride_data.ride.pickup_location|truncatechars:25 }}
                                         </div>
                                         <div class="flex items-center mt-1">
                                             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
                                             </svg>
-                                            {{ ride.dropoff_location|truncatechars:25 }}
+                                            {{ ride_data.ride.dropoff_location|truncatechars:25 }}
                                         </div>
+                                        {% if ride_data.distance_km > 0 %}
+                                            <div class="flex items-center mt-1 text-blue-600">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                                                </svg>
+                                                {{ ride_data.distance_km }}km
+                                            </div>
+                                        {% endif %}
                                     </div>
-                                    <span class="inline-block mt-2 px-2 py-1 text-xs rounded-full {% if ride.status == 'confirmed' %}bg-green-100 text-green-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">
-                                        {{ ride.get_status_display }}
+                                    <span class="inline-block mt-2 px-2 py-1 text-xs rounded-full {% if ride_data.ride.status == 'confirmed' %}bg-green-100 text-green-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                                        {{ ride_data.ride.get_status_display }}
                                     </span>
                                 </div>
                             {% endfor %}

@@ -702,42 +702,68 @@ function displayOffers(offers) {
         return;
     }
     
-    container.innerHTML = offers.map(offer => `
-        <div class="border border-gray-200 rounded-lg p-4 bg-yellow-50 border-yellow-200">
+    container.innerHTML = offers.map(offer => {
+        const isImmediate = offer.type === 'immediate';
+        const riderName = offer.rider_name || offer.passenger_name || 'Unknown';
+        const fare = offer.fare || offer.estimated_fare || 'TBD';
+        const distance = offer.distance_km || offer.distance || 'N/A';
+        const wheelchairRequired = offer.wheelchair_required || offer.is_wheelchair_accessible || false;
+        const urgencyColor = isImmediate ? 'red' : 'yellow';
+        const urgencyLabel = isImmediate ? 'IMMEDIATE' : 'SCHEDULED';
+        
+        return `
+        <div class="border border-gray-200 rounded-lg p-4 bg-${urgencyColor}-50 border-${urgencyColor}-200">
             <div class="flex justify-between items-start mb-3">
-                <div>
+                <div class="flex-1">
+                    ${isImmediate ? '<div class="text-xs font-bold text-red-600 mb-1">' + urgencyLabel + '</div>' : ''}
                     <h4 class="font-semibold text-gray-900">${offer.pickup_location}</h4>
                     <p class="text-sm text-gray-600 mt-1">to ${offer.dropoff_location}</p>
+                    <div class="text-xs text-gray-500 mt-1">
+                        ${isImmediate ? 
+                            `Requested at ${offer.created_at} • ${offer.hours_until_pickup}h until pickup` : 
+                            `${offer.pickup_date} at ${offer.pickup_time} • ${offer.hours_until_pickup}h until pickup`
+                        }
+                    </div>
                 </div>
                 <div class="text-right">
-                    <div class="text-lg font-bold text-green-600">€${offer.estimated_fare}</div>
-                    <div class="text-xs text-gray-500">${offer.distance} km</div>
+                    <div class="text-lg font-bold text-green-600">€${fare}</div>
+                    <div class="text-xs text-gray-500">${distance} km</div>
                 </div>
             </div>
             <div class="flex items-center text-sm text-gray-600 mb-3">
                 <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"></path>
                 </svg>
-                ${offer.passenger_name}
-                ${offer.is_wheelchair_accessible ? '<span class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">Wheelchair</span>' : ''}
+                ${riderName}
+                ${wheelchairRequired ? '<span class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">♿ Wheelchair</span>' : ''}
             </div>
+            ${offer.special_requirements && offer.special_requirements !== 'None' ? 
+                `<div class="text-xs text-gray-600 mb-3 bg-gray-100 p-2 rounded">
+                    <strong>Special Requirements:</strong> ${offer.special_requirements}
+                </div>` : ''
+            }
             <div class="flex gap-2">
-                <button onclick="acceptOffer(${offer.id})" class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
-                    Accept
+                <button onclick="acceptOffer('${offer.id}', '${offer.type}', ${offer.ride_id})" 
+                    class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                    Accept ${isImmediate ? 'Now' : 'Booking'}
                 </button>
-                <button onclick="declineOffer(${offer.id})" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors font-medium">
+                <button onclick="declineOffer('${offer.id}', '${offer.type}')" 
+                    class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors font-medium">
                     Decline
                 </button>
             </div>
-            <div class="text-xs text-gray-500 mt-2 text-center">
-                Expires in <span class="font-mono">${offer.expires_in}</span> seconds
-            </div>
+            ${offer.expires_in_minutes ? 
+                `<div class="text-xs text-gray-500 mt-2 text-center">
+                    Expires in <span class="font-mono">${offer.expires_in_minutes}</span> minutes
+                </div>` : ''
+            }
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 // Accept ride offer
-async function acceptOffer(offerId) {
+async function acceptOffer(offerId, offerType, rideId) {
     try {
         let data;
         
@@ -747,27 +773,44 @@ async function acceptOffer(offerId) {
             alert('Mock: Offer accepted! In production, this would redirect to the ride details page.');
             checkForOffers(); // Refresh offers
             return;
-        } else {
-            const response = await fetch(`/driver/offers/${offerId}/accept/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': getCookie('csrftoken'),
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to accept offer');
+        } 
+        
+        // Determine endpoint based on offer type
+        const isImmediate = offerType === 'immediate';
+        const endpoint = isImmediate ? 
+            `/driver/accept-immediate-ride/${rideId}/` : 
+            `/driver/offers/${offerId.replace('prebooked_', '')}/accept/`;
+        
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest'
             }
-            
-            data = await response.json();
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to accept offer');
         }
         
+        data = await response.json();
+        
         if (data.success) {
-            // Redirect to ride details or show success message
-            window.location.href = data.redirect_url;
+            // Show success message
+            alert(data.message || `${isImmediate ? 'Immediate ride' : 'Booking'} accepted successfully!`);
+            
+            // Refresh offers to show updated state
+            checkForOffers();
+            
+            // Optionally redirect to ride details or driver dashboard
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else if (isImmediate) {
+                // For immediate rides, might want to go to active ride view
+                // window.location.href = '/driver/active-ride/';
+            }
         } else {
-            alert(data.message || 'Failed to accept offer');
+            alert(data.error || data.message || 'Failed to accept offer');
         }
     } catch (error) {
         console.error('Error accepting offer:', error);

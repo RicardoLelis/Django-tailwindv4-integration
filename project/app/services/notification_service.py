@@ -162,3 +162,86 @@ class NotificationService:
         """Send SMS notification (placeholder)"""
         # TODO: Integrate with Twilio or similar
         pass
+    
+    def broadcast_immediate_ride_to_drivers(self, ride):
+        """Broadcast immediate ride to all available drivers"""
+        try:
+            # Import here to avoid circular imports
+            from ..models import Driver, Ride
+            
+            # Get all available drivers
+            available_drivers = Driver.objects.filter(
+                is_available=True,
+                is_active=True,
+                application_status='approved'
+            ).select_related('user')
+            
+            if not available_drivers.exists():
+                logger.info(f"No available drivers to broadcast ride {ride.id}")
+                return
+            
+            # Create notification for each available driver
+            for driver in available_drivers:
+                try:
+                    subject = f"New immediate ride available - {ride.pickup_location}"
+                    
+                    message = f"""
+                    New Ride Request Available!
+                    
+                    Pickup: {ride.pickup_location}
+                    Dropoff: {ride.dropoff_location}
+                    Time: {ride.pickup_datetime.strftime('%I:%M %p on %B %d')}
+                    
+                    Rider: {ride.rider.user.get_full_name() or ride.rider.user.username}
+                    {f"Special requirements: {ride.special_requirements}" if ride.special_requirements else ''}
+                    
+                    Check your driver app to accept this ride.
+                    """
+                    
+                    # Send email notification
+                    send_mail(
+                        subject,
+                        message,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [driver.user.email],
+                        fail_silently=True
+                    )
+                    
+                    logger.info(f"Broadcasted ride {ride.id} to driver {driver.id}")
+                    
+                except Exception as e:
+                    logger.error(f"Error sending notification to driver {driver.id}: {e}")
+            
+            logger.info(f"Broadcasted immediate ride {ride.id} to {available_drivers.count()} drivers")
+            
+        except Exception as e:
+            logger.error(f"Error broadcasting immediate ride {ride.id}: {e}")
+    
+    def notify_rider_ride_accepted(self, ride, driver):
+        """Notify rider that their immediate ride was accepted by a driver"""
+        try:
+            subject = "Your ride has been accepted!"
+            
+            message = f"""
+            Great news! A driver has accepted your ride.
+            
+            Driver: {driver.user.get_full_name() or driver.user.username}
+            Pickup: {ride.pickup_location}
+            Dropoff: {ride.dropoff_location}
+            Time: {ride.pickup_datetime.strftime('%I:%M %p')}
+            
+            Your driver will contact you shortly with arrival details.
+            """
+            
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [ride.rider.user.email],
+                fail_silently=True
+            )
+            
+            logger.info(f"Sent ride acceptance notification for ride {ride.id}")
+            
+        except Exception as e:
+            logger.error(f"Error sending ride acceptance notification: {e}")
