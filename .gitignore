@@ -84,3 +84,8 @@ test-results/
 dmypy.json
 .pyre/
 .ruff_cache/
+
+# Map data files (too large for git)
+map-tiles/
+*.osm.pbf
+*.pmtiles
