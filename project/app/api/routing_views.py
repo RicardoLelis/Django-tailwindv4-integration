@@ -131,6 +131,8 @@ def get_wheelchair_route(request):
             )
             return Response(route, status=status.HTTP_200_OK)
         else:
+            # Log the issue for debugging
+            logger.warning(f"No wheelchair route found for coordinates: {coordinates}")
             return Response(
                 {'error': 'No wheelchair-accessible route found'},
                 status=status.HTTP_404_NOT_FOUND

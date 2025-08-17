@@ -59,26 +59,40 @@
             <!-- Main Booking Section with Integrated Map -->
             <div class="xl:col-span-3">
                 <div class="glass-effect rounded-3xl shadow-xl p-8">
+                    <!-- Pre-Book Button (Always Visible) -->
+                    <div class="mb-6 text-center">
+                        <a href="{% url 'pre_book_ride' %}" 
+                           class="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 text-lg"
+                           style="background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%) !important; color: white !important; display: inline-flex !important; align-items: center !important; text-decoration: none !important;">
+                            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            Pre-Book Ride
+                        </a>
+                    </div>
+
                     <div class="flex items-center justify-between mb-6">
                         <h2 class="text-2xl font-display font-bold text-gray-800 flex items-center">
                             <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
                                 <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 616 0z"></path>
                                 </svg>
                             </div>
                             Book Your Ride
                         </h2>
                         
-                        <!-- Location Detection Button -->
-                        <button type="button" onclick="getCurrentLocation()" 
-                                class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-xl font-medium transition-colors flex items-center text-sm">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                            Use My Location
-                        </button>
+                        <div class="flex items-center space-x-3">
+                            <!-- Location Detection Button -->
+                            <button type="button" onclick="getCurrentLocation()" 
+                                    class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-xl font-medium transition-colors flex items-center text-sm">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 616 0z"></path>
+                                </svg>
+                                Use My Location
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Interactive Map - Now at the top for better flow -->
@@ -128,8 +142,8 @@
                                         Pickup Location
                                     </label>
                                     <div class="relative">
-                                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                            <svg class="h-4 w-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                            <svg class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                             </svg>
@@ -149,8 +163,8 @@
                                         Destination
                                     </label>
                                     <div class="relative">
-                                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                            <svg class="h-4 w-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                            <svg class="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                             </svg>
@@ -268,7 +282,7 @@
                         <!-- Booking Options Description -->
                         <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-4 text-center">
                             <p class="text-sm text-gray-700">
-                                <strong>Book Now</strong> for immediate rides or <strong>Pre-Book</strong> to schedule rides in advance with your preferred drivers
+                                Fill the form below for <strong>immediate rides</strong>, or use the <strong>button above to schedule</strong> rides in advance
                             </p>
                         </div>
                         
@@ -445,6 +459,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         initializeSmartBooking();
         setupProgressiveForm();
+        checkForSuccessfulBooking();
     });
     
     function initializeSmartBooking() {
@@ -491,6 +506,80 @@
             console.warn('Map initialization failed, booking form still functional:', error);
             showStatus('Booking form ready (map features limited)', 'info');
         }
+    }
+    
+    function checkForSuccessfulBooking() {
+        // Check if there's a success message indicating a successful booking
+        const successMessage = document.querySelector('.bg-green-50.text-green-700');
+        if (successMessage && successMessage.textContent.includes('booked successfully')) {
+            // Get the most recent ride data from Django context
+            {% if upcoming_rides and upcoming_rides.0 %}
+                const latestRide = {
+                    pickup_location: "{{ upcoming_rides.0.ride.pickup_location|escapejs }}",
+                    dropoff_location: "{{ upcoming_rides.0.ride.dropoff_location|escapejs }}",
+                    distance_km: {{ upcoming_rides.0.distance_km|default:0 }},
+                    estimated_fare: {{ upcoming_rides.0.estimated_fare|default:0 }}
+                };
+                
+                if (latestRide.pickup_location && latestRide.dropoff_location) {
+                    showStatus('Loading your booked route... 📍', 'info');
+                    displayBookedRoute(latestRide.pickup_location, latestRide.dropoff_location);
+                }
+            {% endif %}
+        }
+    }
+    
+    async function displayBookedRoute(pickupLocation, dropoffLocation) {
+        try {
+            // First geocode both locations
+            const [pickupCoords, dropoffCoords] = await Promise.all([
+                geocodeAddress(pickupLocation),
+                geocodeAddress(dropoffLocation)
+            ]);
+            
+            if (pickupCoords && dropoffCoords && mapInstance) {
+                // Set locations on the map
+                mapInstance.setPickupLocation(pickupCoords.lat, pickupCoords.lng, pickupLocation);
+                mapInstance.setDropoffLocation(dropoffCoords.lat, dropoffCoords.lng, dropoffLocation);
+                
+                // The map component will automatically calculate and display the route
+                showStatus('Your booked route is displayed on the map! 🗺️', 'success');
+            } else {
+                showStatus('Could not display route on map, but your ride is confirmed!', 'info');
+            }
+        } catch (error) {
+            console.error('Error displaying booked route:', error);
+            // Still show success but mention route display issue
+            showStatus('Ride confirmed! Route display will load shortly...', 'success');
+            
+            // Retry after a short delay in case it was a temporary issue
+            setTimeout(() => {
+                if (mapInstance && pickupCoords && dropoffCoords) {
+                    mapInstance.setPickupLocation(pickupCoords.lat, pickupCoords.lng, pickupLocation);
+                    mapInstance.setDropoffLocation(dropoffCoords.lat, dropoffCoords.lng, dropoffLocation);
+                }
+            }, 2000);
+        }
+    }
+    
+    async function geocodeAddress(address) {
+        try {
+            const response = await fetch('/api/geocoding/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ address: address })
+            });
+            
+            if (response.ok) {
+                return await response.json();
+            }
+        } catch (error) {
+            console.error('Geocoding error:', error);
+        }
+        return null;
     }
     
     function setupProgressiveForm() {

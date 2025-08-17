@@ -24,23 +24,25 @@ if 'DEFAULT_THROTTLE_RATES' in REST_FRAMEWORK:
         'routing': '1000/minute',
     })
 
-# Cache configuration - fallback to in-memory if Redis not available
-try:
-    # Test Redis connection
-    import redis
-    r = redis.from_url(REDIS_URL)
-    r.ping()
-    logging.info("Redis connection successful")
-except Exception as e:
-    logging.warning(f"Redis connection failed: {e}, using fallback cache")
-    # Fallback to local memory cache
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'wheelchair-rides-dev',
-        }
+# Simple cache configuration for development
+# Use local memory cache to avoid Redis compatibility issues
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'wheelchair-rides-dev',
     }
-    SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+}
+
+# Use database sessions instead of cache sessions to avoid Redis issues
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_CACHE_ALIAS = None
+
+# Remove django_ratelimit from INSTALLED_APPS for development
+if 'django_ratelimit' in INSTALLED_APPS:
+    INSTALLED_APPS = [app for app in INSTALLED_APPS if app != 'django_ratelimit']
+
+# Disable rate limiting for development to avoid cache backend issues
+RATELIMIT_ENABLE = False
 
 # Less strict security for development
 SESSION_COOKIE_SECURE = False

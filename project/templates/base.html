@@ -31,21 +31,31 @@
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
         }
-        .glass-input {
-            background: rgba(255, 255, 255, 0.1);
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .glass-input {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #374151;
         }
         .glass-input:focus {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(167, 139, 250, 0.4);
+            background: rgba(255, 255, 255, 0.9);
+            border-color: rgba(167, 139, 250, 0.6);
             outline: none;
             box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
         }
+        .glass-input::placeholder {
+            color: #6b7280;
+        }
         .glass-input option {
-            background: rgba(30, 41, 59, 0.95);
-            color: white;
+            background: rgba(255, 255, 255, 0.95);
+            color: #374151;
         }
         @keyframes float {
             0% { transform: translateY(0px); }
@@ -54,6 +64,21 @@
         }
         .float-animation {
             animation: float 6s ease-in-out infinite;
+        }
+        .submit-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white !important;
+            background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%) !important;
+            border: none;
+            cursor: pointer;
+        }
+        .submit-button:hover {
+            background: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         }
     </style>
 </head>

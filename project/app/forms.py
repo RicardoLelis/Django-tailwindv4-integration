@@ -648,7 +648,7 @@ class PreBookedRideForm(forms.ModelForm):
     pickup_location = forms.CharField(
         max_length=255,
         widget=forms.TextInput(attrs={
-            'class': 'w-full px-4 py-3 glass-input rounded-xl text-white placeholder-white/60 focus:border-purple-400 focus:ring-purple-400 transition-all',
+            'class': 'w-full px-4 py-3 glass-input rounded-xl focus:border-purple-400 focus:ring-purple-400 transition-all',
             'placeholder': 'Enter pickup location'
         })
     )
@@ -656,7 +656,7 @@ class PreBookedRideForm(forms.ModelForm):
     dropoff_location = forms.CharField(
         max_length=255,
         widget=forms.TextInput(attrs={
-            'class': 'w-full px-4 py-3 glass-input rounded-xl text-white placeholder-white/60 focus:border-purple-400 focus:ring-purple-400 transition-all',
+            'class': 'w-full px-4 py-3 glass-input rounded-xl focus:border-purple-400 focus:ring-purple-400 transition-all',
             'placeholder': 'Enter dropoff location'
         })
     )
@@ -664,7 +664,7 @@ class PreBookedRideForm(forms.ModelForm):
     scheduled_pickup_date = forms.DateField(
         widget=forms.DateInput(attrs={
             'type': 'date',
-            'class': 'w-full px-4 py-3 glass-input rounded-xl text-white focus:border-purple-400 focus:ring-purple-400 transition-all',
+            'class': 'w-full px-4 py-3 glass-input rounded-xl focus:border-purple-400 focus:ring-purple-400 transition-all',
             'min': (timezone.now() + timedelta(hours=2)).date().isoformat()
         })
     )
@@ -672,7 +672,7 @@ class PreBookedRideForm(forms.ModelForm):
     scheduled_pickup_time = forms.TimeField(
         widget=forms.TimeInput(attrs={
             'type': 'time',
-            'class': 'w-full px-4 py-3 glass-input rounded-xl text-white focus:border-purple-400 focus:ring-purple-400 transition-all'
+            'class': 'w-full px-4 py-3 glass-input rounded-xl focus:border-purple-400 focus:ring-purple-400 transition-all'
         })
     )
     
@@ -680,7 +680,7 @@ class PreBookedRideForm(forms.ModelForm):
         min_value=5,
         max_value=300,
         widget=forms.NumberInput(attrs={
-            'class': 'w-full px-4 py-3 glass-input rounded-xl text-white placeholder-white/60 focus:border-purple-400 focus:ring-purple-400 transition-all',
+            'class': 'w-full px-4 py-3 glass-input rounded-xl focus:border-purple-400 focus:ring-purple-400 transition-all',
             'placeholder': '30',
             'min': '5',
             'max': '300'
@@ -692,7 +692,7 @@ class PreBookedRideForm(forms.ModelForm):
         max_value=60,
         initial=15,
         widget=forms.NumberInput(attrs={
-            'class': 'w-full px-4 py-3 glass-input rounded-xl text-white placeholder-white/60 focus:border-purple-400 focus:ring-purple-400 transition-all',
+            'class': 'w-full px-4 py-3 glass-input rounded-xl focus:border-purple-400 focus:ring-purple-400 transition-all',
             'placeholder': '15',
             'min': '5',
             'max': '60'
@@ -710,7 +710,7 @@ class PreBookedRideForm(forms.ModelForm):
     special_requirements = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={
-            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all',
+            'class': 'w-full px-4 py-3 glass-input rounded-xl focus:border-purple-400 focus:ring-purple-400 transition-all',
             'placeholder': 'Any special requirements or instructions for the driver',
             'rows': 3
         })
@@ -725,7 +725,7 @@ class PreBookedRideForm(forms.ModelForm):
         ],
         initial='normal',
         widget=forms.Select(attrs={
-            'class': 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all'
+            'class': 'w-full px-4 py-3 glass-input rounded-xl focus:border-purple-400 focus:ring-purple-400 transition-all'
         })
     )
     

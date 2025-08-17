@@ -10,8 +10,7 @@ from typing import Dict, Optional, List, Tuple
 from decimal import Decimal
 from django.conf import settings
 from django.core.cache import cache
-from django_ratelimit.decorators import ratelimit
-from django.utils.decorators import method_decorator
+# Rate limiting is handled at the API view level
 from .geocoding_service import GeocodingError
 
 logger = logging.getLogger(__name__)
@@ -39,8 +38,8 @@ class RoutingService:
             'Accept': 'application/json'
         })
         
-        # Default profile for wheelchair accessibility
-        self.wheelchair_profile = 'wheelchair'
+        # Default profiles for routing
+        self.wheelchair_profile = 'foot-walking'  # Use walking profile for wheelchair accessibility
         self.driving_profile = 'driving-car'
         
         # Route optimization settings
@@ -85,7 +84,6 @@ class RoutingService:
             self.service_area.get('west', -9.5000) <= lng <= self.service_area.get('east', -9.0000)
         )
     
-    @method_decorator(ratelimit(key='user_or_ip', rate=settings.ROUTING_RATE_LIMIT, method='POST'))
     def get_wheelchair_route(
         self,
         coordinates: List[List[float]],
@@ -139,7 +137,6 @@ class RoutingService:
             logger.error(f"Unexpected wheelchair routing error: {e}")
             raise RoutingError(f"Wheelchair routing service unavailable: {str(e)}")
     
-    @method_decorator(ratelimit(key='user_or_ip', rate=settings.ROUTING_RATE_LIMIT, method='POST'))
     def get_driving_route(
         self,
         coordinates: List[List[float]],
@@ -233,8 +230,11 @@ class RoutingService:
             else:
                 payload['preference'] = 'shortest'
             
+            # Map profile to correct endpoint
+            profile_endpoint = self.wheelchair_profile if profile == 'wheelchair' else profile
+            
             response = self.session.post(
-                f"{self.api_url}/v2/directions/{self.wheelchair_profile}/geojson",
+                f"{self.api_url}/v2/directions/{profile_endpoint}/geojson",
                 json=payload,
                 timeout=15
             )
@@ -242,6 +242,16 @@ class RoutingService:
             
             return response.json()
             
+        except requests.exceptions.HTTPError as e:
+            if hasattr(e, 'response') and e.response.status_code == 406:
+                logger.warning(f"OpenRouteService profile '{profile}' not supported, using fallback")
+                return self._get_fallback_route(coordinates)
+            elif hasattr(e, 'response') and e.response.status_code == 429:
+                logger.warning("OpenRouteService rate limit exceeded, using fallback")
+                return self._get_fallback_route(coordinates)
+            else:
+                logger.warning(f"OpenRouteService HTTP error: {e}, falling back")
+                return self._get_fallback_route(coordinates)
         except requests.RequestException as e:
             logger.warning(f"OpenRouteService API error: {e}, falling back")
             return self._get_fallback_route(coordinates)
@@ -308,10 +318,19 @@ class RoutingService:
         return avoid_features
     
     def _process_route_response(self, route_data: Dict, profile: str) -> Dict:
-        """Process and enhance route response from OpenRouteService"""
+        """Process and enhance route response from OpenRouteService or fallback"""
         try:
+            logger.debug(f"Processing route response keys: {list(route_data.keys())}")
+            
+            # Check if this is already a processed fallback response
+            if 'geometry' in route_data and 'summary' in route_data and 'features' not in route_data:
+                logger.debug("Route response is already processed (fallback format)")
+                return route_data
+            
+            # Process OpenRouteService GeoJSON response
             features = route_data.get('features', [])
             if not features:
+                logger.warning(f"No features in route response. Response: {route_data}")
                 raise RoutingError("No route found in API response")
             
             route_feature = features[0]

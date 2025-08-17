@@ -33,8 +33,8 @@ class GeocodingService:
         self.session = requests.Session()
         self.session.headers.update({'User-Agent': self.user_agent})
         
-        # Input validation patterns
-        self.address_pattern = re.compile(r'^[a-zA-Z0-9\s,.-çãõáéíóúâêîôûàèìòù]+$', re.IGNORECASE)
+        # Input validation patterns - more permissive for international addresses
+        self.address_pattern = re.compile(r'^[a-zA-Z0-9\s,.\-()çãõáéíóúâêîôûàèìòùñü\/º°ª]+$', re.IGNORECASE)
         self.coordinate_pattern = re.compile(r'^-?\d+\.?\d*$')
     
     def _validate_address_input(self, address: str) -> str:
@@ -414,8 +414,10 @@ class GeocodingService:
             
             clean_query = self._validate_address_input(query)
             
-            # Check cache first
-            cache_key = f"suggestions:{clean_query.lower()}:{limit}"
+            # Check cache first - create safe cache key
+            import hashlib
+            safe_query = hashlib.md5(clean_query.lower().encode()).hexdigest()
+            cache_key = f"suggestions:{safe_query}:{limit}"
             cached_result = cache.get(cache_key)
             if cached_result:
                 logger.debug(f"Address suggestions cache hit for: {clean_query[:30]}")

@@ -50,7 +50,7 @@ def pre_book_ride(request):
                     rider=rider,
                     pickup_location=form.cleaned_data['pickup_location'],
                     dropoff_location=form.cleaned_data['dropoff_location'],
-                    pickup_datetime=form.cleaned_data['pickup_datetime'],
+                    pickup_datetime=form.cleaned_data['scheduled_pickup_time'],
                     booking_type=form.cleaned_data.get('booking_type', 'single'),
                     purpose=form.cleaned_data.get('purpose', 'other'),
                     special_requirements=form.cleaned_data.get('special_requirements', ''),
