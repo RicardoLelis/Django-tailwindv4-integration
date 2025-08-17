@@ -77,6 +77,9 @@ htmlcov/
 nosetests.xml
 test-results/
 
+# Test files in project root (temporary/development tests)
+project/test_*.py
+
 # Misc
 *.bak
 .mypy_cache/
